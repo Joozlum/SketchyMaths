@@ -1,5 +1,96 @@
 #:kivy 1.11.1
 
-Button:
-    text: 'Hello World'
+#:import gt sketchymaths.text_loader
+
+SketchyScreens:
+
+<SketchyScreens>:
+    SketchyMain:
+    SketchyGuide:
+
+<EquationEditor>:
+    height: 40
+    font_size: 20
+    size_hint_y: None
+    multiline: False
+
+<EquationLabel>:
+
+<EquationScatter>:
+    size_hint: None, None
+    size: label_equation.size
+
+#    canvas.after:
+#        Color:
+#            rgba: 0, 1, 0, 0.2
+#        Rectangle:
+#            pos: self.pos
+#            size: self.size
+    EquationLabel:
+        id: label_equation
+        text: root.text
+        markup: True
+        font_size: 20
+        size: self.texture_size
+
+
+<BlackBoard>:
+    text: 'BlackBoard'
+
+
+<SketchyMath>:
+    text: 'SketchyMath'
+    orientation: 'vertical'
+    text: 'BoxLayout'
+
+<SketchyMain>:
+    name: 'main'
+    BoxLayout:
+        orientation: 'vertical'
+        SketchyMath:
+            id: math_junk
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 25 / root.height
+            Button:
+                text: 'Guide'
+                font_size: 20
+                on_release: app.root.current = 'guide'
+            Button:
+                text: 'Save'
+                font_size: 20
+                on_release: math_junk.save_function(math_junk.equations)
+            Button:
+                text: 'Load'
+                font_size: 20
+                on_release: math_junk.load_function()
+
+<SketchyGuide>:
+    name: 'guide'
+    BoxLayout:
+        orientation: 'vertical'
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            Label:
+                id: guide_label
+                size_hint_y: None
+                height: self.texture_size[1]
+                text_size: self.width, None
+                padding: 10, 10
+                font_size: 20
+                text: gt.guide_text
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: .1
+            Button:
+                text: 'Guide'
+                on_release: guide_label.text = gt.guide_text
+            Button:
+                text: 'Methods'
+                on_release: guide_label.text = gt.methods_text
+            Button:
+                text: 'Return'
+                on_release: app.root.current = 'main'
 

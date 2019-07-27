@@ -1,0 +1,61 @@
+Operators
+'+': addition
+'-': subtraction
+'*': multiplication
+'/': division
+'//': floored division
+'%': remainder of x/y
+'**': raise to power (exponent)
+
+Boolean Operators
+'or'
+'and'
+'not'
+
+Comparisons
+'<': less than
+'<=': less than or equal
+'>': greater than
+'>=': greater than or equal
+'==': equal
+'!=': not equal
+'is': object identity
+'is not': negated object identity
+
+Bitwise Operators for integers
+'|': bitwise or
+'^': bitwise exclusive or
+'&': bitwise and
+'<<': shift left by n bits
+'>>': shift right by n bits
+'~': invert bits
+
+Functions
+'acos': acos
+'asin': asin
+'atan': atan
+'atan2': atan2
+'ceil': ceil
+'cos': cos
+'cosh': cosh
+'degrees': degrees
+'e': e
+'exp': exp
+'fabs': fabs
+'floor': floor
+'fmod': fmod
+'frexp': frexp
+'hypot': hypot
+'ldexp': ldexp
+'log': log
+'log10': log10
+'modf':modf
+'pi': pi
+'pow': pow
+'radians': radians
+'sin': sin
+'sinh': sinh
+'sqrt': sqrt
+'tan': tan
+'tanh': tanh
+'percent': divide by 100
