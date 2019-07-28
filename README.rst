@@ -10,6 +10,9 @@ Features
 
 * TODO
 
+    * Update load/save to handle multiple saves
+    * Create settings window
+    * Create method for customizing names of equation separate from id
 
 Usage
 -----
