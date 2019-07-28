@@ -1,4 +1,7 @@
+import datetime
 import json
+import pickle
+import shelve
 from math import atan2, cos, sin
 
 from kivy.app import App
@@ -12,12 +15,7 @@ from kivy.uix.scatter import Scatter
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.textinput import TextInput
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty, DictProperty
-import sketchymaths.sketchymathmethods
-
-# todo
-#   Update load/save to handle multiple saves
-#   Create settings window
-#   Create method for customizing names of equation separate from id
+from sketchymaths import sketchymathmethods, sketchyload, sketchysave
 
 
 class SketchyMain(Screen):
@@ -29,7 +27,11 @@ class SketchyGuide(Screen):
 
 
 class SketchyScreens(ScreenManager):
-    pass
+    def load_data(self, data):
+        self.get_screen('main').children[0].children[1].load_function(data)
+
+    def save_data(self):
+        return self.get_screen('main').children[0].children[1].equations
 
 
 class EquationEditor(TextInput):
@@ -292,15 +294,17 @@ class SketchyMath(BoxLayout):
 #   data, with the option of loading or deleting each one.
 
     def save_function(self, equation_dictionary: dict):
+        t = str(datetime.datetime.today())
         data = []
         for inst in equation_dictionary.values():
             x = (inst.equation_id, inst.pos, inst.equation_text)
             data.append(x)
-        save = open('sketchysave.txt', 'w+')
-        json.dump(data, save)
-        save.close()
+        sketchybook = shelve.open('data/SketchyBook')
+        sketchybook[t] = pickle.dumps(data)
+        sketchybook.close()
 
-    def load_function(self):
+
+    def load_function(self, data):
         #  todo
         #   Create a load function that takes the first part of a save data line and makes
         #   a dictionary{'name': line} that can be displayed as a list with a load button
@@ -309,11 +313,9 @@ class SketchyMath(BoxLayout):
             for inst in self.equations.values():
                 self.blackboard.remove_widget(inst)
         self.equations.clear()
-        data = open('sketchysave.txt', 'r')
-        load_data = json.load(data)
-        data.close()
-        if load_data is not None:
-            for save in load_data:
+
+        if data is not None:
+            for save in data:
                 eq = EquationScatter()
                 eq.pos = save[1]
                 eq.equation_id = save[0]

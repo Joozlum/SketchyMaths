@@ -3,14 +3,14 @@
 
 import unittest
 
-from sketchymaths.sketchymathsapp import SketchymathsApp
+from sketchymaths.sketchymathsapp import SketchyMathsApp
 
 
 class TestSketchymathsApp(unittest.TestCase):
     """TestCase for SketchymathsApp.
     """
     def setUp(self):
-        self.app = SketchymathsApp()
+        self.app = SketchyMathsApp()
 
     def test_name(self):
         self.assertEqual(self.app.name, 'sketchymaths')
