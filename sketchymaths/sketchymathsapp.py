@@ -15,7 +15,7 @@ from kivy.uix.scatter import Scatter
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.textinput import TextInput
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty, DictProperty
-from sketchymaths import sketchymathmethods, sketchyload
+from sketchymaths import sketchymathmethods, sketchyload, sketchysave
 
 
 class SketchyMain(Screen):
@@ -29,6 +29,9 @@ class SketchyGuide(Screen):
 class SketchyScreens(ScreenManager):
     def load_data(self, data):
         self.get_screen('main').children[0].children[1].load_function(data)
+
+    def save_data(self):
+        return self.get_screen('main').children[0].children[1].equations
 
 
 class EquationEditor(TextInput):

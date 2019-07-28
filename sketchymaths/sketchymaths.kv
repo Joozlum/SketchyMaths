@@ -8,6 +8,7 @@ SketchyScreens:
     SketchyMain:
     SketchyGuide:
     SketchyLoad:
+    SketchySave:
 
 <EquationEditor>:
     height: 40
@@ -16,6 +17,11 @@ SketchyScreens:
     multiline: False
 
 <EquationLabel>:
+
+<labelsavename>:
+    text_size: self.size
+    valign: 'bottom'
+    padding: 20, 20
 
 <EquationScatter>:
     size_hint: None, None
@@ -62,7 +68,7 @@ SketchyScreens:
             Button:
                 text: 'Save'
                 font_size: 20
-                on_release: math_junk.save_function(math_junk.equations)
+                on_release: app.root.current = 'save'
             Button:
                 text: 'Load'
                 font_size: 20
@@ -70,6 +76,9 @@ SketchyScreens:
 
 <SketchyLoad>:
     name: 'load'
+
+<SketchySave>
+    name: 'save'
 
 <SketchyGuide>:
     name: 'guide'
