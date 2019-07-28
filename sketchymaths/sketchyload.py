@@ -65,7 +65,19 @@ class SketchyBox(BoxLayout):
         if not self.isopen:
             self.sketchybook = shelve.open('data/SketchyBook')
             for save in self.sketchybook:
-                new_button = Button(text=save, size_hint_y=None, height=40)
-                self.topbox.add_widget(new_button)
-                new_button.bind(on_press=self.close_load)
+                save_line = BoxLayout(size_hint_y=None, height=40)
+                load_button = Button(text=save, size_hint_x=.9)
+                delete_button = Button(text='Delete', size_hint_x=.1)
+                save_line.add_widget(load_button)
+                save_line.add_widget(delete_button)
+                self.topbox.add_widget(save_line)
+                delete_button.save = save
+                delete_button.save_line = save_line
+                load_button.bind(on_press=self.close_load)
+                delete_button.bind(on_release=self.delete_save)
             self.isopen = True
+
+    def delete_save(self, target):
+        del self.sketchybook[target.save]
+        self.topbox.remove_widget(target.save_line)
+
