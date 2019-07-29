@@ -15,7 +15,8 @@ Features
 
 * TODO
     * Create settings window
-    * Create method for customizing names of equation separate from id
+    * Clean up code
+    * Make arrows fancier and avoid crossing other equations
 
 Usage
 -----

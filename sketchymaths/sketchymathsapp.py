@@ -42,8 +42,6 @@ class EquationEditor(TextInput):
         self.bind(on_text_validate=self.on_enter)
 
     def on_enter(self, *args):
-        #  todo
-        #   send command to update all equations
         pass
 
 
@@ -54,7 +52,7 @@ class EquationLabel(Label):
 class EquationScatter(Scatter):
     equation_text = StringProperty('Click me and type above!')
     root = ObjectProperty(None)
-    equation_id = NumericProperty(0)
+    equation_id = StringProperty('')
     text = StringProperty('Click me and type above!')
 
     def __init__(self, **kwargs):
@@ -97,7 +95,7 @@ class EquationScatter(Scatter):
             result = equation
         if internal:
             return result
-        return "f(%s)= %s" % (self.equation_id, result)
+        return "(%s)= %s" % (self.equation_id, result)
 
     #  Run a dependency test as well as the binding callback
     #  todo
@@ -119,9 +117,18 @@ class EquationScatter(Scatter):
     def equation_bind(self):
         if self.root.previous_equation is not None:
             self.root.ET.funbind('text', self.root.previous_equation.text_focus)
+            self.root.IDT.funbind('text', self.root.previous_equation.id_text_focus)
             self.root.previous_equation.children[1].bold = False
+
+        #  Set EquationEditor text to focused equation and bind them
         self.root.ET.text = self.equation_text
         self.root.ET.fbind('text', self.text_focus)
+
+        #  Set id Editor text to focused equation's id and bind them
+        self.root.IDT.text = str(self.equation_id)
+        self.root.IDT.fbind('text', self.id_text_focus)
+
+
 
         #  if previous_equation is empty then call for deletion
         if self.root.previous_equation is not None:
@@ -147,6 +154,27 @@ class EquationScatter(Scatter):
         if self.collide_point(*touch.pos):
             self.equation_bind()
             self.test_dependencies()
+
+    def id_text_focus(self, target, value=None):
+        self.update_equation_id(target.text)
+        self.update_text(None)
+
+    def update_equation_id(self, new_id):
+        """
+
+        :type new_id: str
+        """
+        if new_id == '':
+            return
+        if ':' in new_id:
+            new_id = new_id.replace(":", ";")
+
+        if new_id in self.root.equations:
+            return
+        if self.equation_id in self.root.equations:
+            del self.root.equations[self.equation_id]
+        self.root.equations[new_id] = self
+        self.equation_id = new_id
 
 
 class BlackBoard(FloatLayout):
@@ -229,10 +257,29 @@ class SketchyMath(BoxLayout):
 
     def __init__(self, **kwargs):
         super(SketchyMath, self).__init__(**kwargs)
+
+        self.texteditorbox = BoxLayout()
+        self.texteditorbox.orientation = 'horizontal'
+        self.texteditorbox.size_hint_y = None
+        self.texteditorbox.height = 40
+
+        self.IDT = EquationEditor()
+        self.IDT.root = self
+        self.IDT.text = ''
+        self.IDT.size_hint_x = .2
+
         self.ET = EquationEditor(root=self)
-        self.add_widget(self.ET)
+        self.ET.size_hint_x = .8
+
         self.blackboard = BlackBoard(size=self.size, root=self)
+
+        self.texteditorbox.add_widget(self.IDT)
+        self.texteditorbox.add_widget(self.ET)
+
+        self.add_widget(self.texteditorbox)
         self.add_widget(self.blackboard)
+
+        #  calls function to draw lines twice a second
         Clock.schedule_interval(self.blackboard.draw_connections, 0.5)
 
     def new_equation(self, pos, **kwargs):
@@ -247,11 +294,13 @@ class SketchyMath(BoxLayout):
         eq = EquationScatter(pos=(pos[0] - 20, pos[1] - 10),
                              root=self)
         i = 0
-        while i in self.equations:
+        ii = 'x' + str(i)
+        while ii in self.equations:
             i += 1
+            ii = 'x' + str(i)
         else:
-            self.equations[i] = eq
-        eq.equation_id = i
+            self.equations[ii] = eq
+        eq.equation_id = ii
         self.blackboard.add_widget(eq)
 
         #  Bind new equation to EquationEditor
@@ -281,7 +330,7 @@ class SketchyMath(BoxLayout):
         self.canvas.after.clear()
 
     def delete_equation(self):
-        key = self.previous_equation.equation_id
+        key = str(self.previous_equation.equation_id)
         uid = self.equations[key]
         del self.equations[key]
         self.blackboard.remove_widget(uid)
@@ -297,9 +346,9 @@ class SketchyMath(BoxLayout):
             for save in data:
                 eq = EquationScatter()
                 eq.pos = save[1]
-                eq.equation_id = save[0]
+                eq.equation_id = str(save[0])
                 eq.root = self
-                self.equations[save[0]] = eq
+                self.equations[str(save[0])] = eq
                 self.blackboard.add_widget(eq)
                 eq.equation_text = str(save[2])
         for inst in self.equations.values():
