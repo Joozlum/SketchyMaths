@@ -27,7 +27,7 @@ class SketchySave(Screen):
 
 
     def previous_saves(self):
-        self.paddingbox.text = 'Previous Saves:'
+        self.paddingbox.text = 'Previous Saves:\n'
         sketchybook = shelve.open('data/SketchyBook')
         for save in sketchybook:
             self.paddingbox.text += '\n'
@@ -57,6 +57,7 @@ class SketchySave(Screen):
         self.paddingbox = Label()
         self.paddingbox.valign = 'top'
         self.paddingbox.padding = (20, 20)
+        self.paddingbox.font_size = 20
 
         self.buttonbox = BoxLayout()
 

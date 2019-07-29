@@ -302,6 +302,8 @@ class SketchyMath(BoxLayout):
                 self.equations[save[0]] = eq
                 self.blackboard.add_widget(eq)
                 eq.equation_text = str(save[2])
+        for inst in self.equations.values():
+            inst.update_text(target=None)
 
 
 class SketchyMathsApp(App):

@@ -2,15 +2,18 @@
 SketchyMaths
 =============================
 
-MindMapping for Maths
+MindMapping for Maths.  Allows for a blackboard style approach to
+math, letting you have multiple math problems on the screen, while
+also evaluating each in real time.  It also allows for taking the
+result of one problem and using it in another, and if you change
+any dependencies all of the problems that use them will update
+with the changing results.
 
 
 Features
 --------
 
 * TODO
-
-    * Update load/save to handle multiple saves
     * Create settings window
     * Create method for customizing names of equation separate from id
 
@@ -20,7 +23,7 @@ Usage
 Launching the app
 ~~~~~~~~~~~~~~~~~
 
-`Kivy`_ is compatible with Python 2 as well as Python 3::
+`Kivy` is compatible with Python 2 as well as Python 3::
 
     cd sketchymaths
     python main.py
@@ -33,12 +36,12 @@ Run its testsuite either with Python3::
     cd sketchymaths
     python -m unittest discover
 
-Or with `nose`_::
+Or with `nose`::
 
     cd sketchymaths
     nosetests
 
-Or with `py.test`_::
+Or with `py.test`::
 
     cd sketchymaths
     py.test
@@ -46,13 +49,13 @@ Or with `py.test`_::
 Deploying to Android
 ~~~~~~~~~~~~~~~~~~~~
 
-You can easily run the app on Android by using the `Kivy Launcher`_.
+You can easily run the app on Android by using the `Kivy Launcher`.
 
 
 License
 -------
 
-Distributed under the terms of the `MIT license`_, sketchymaths free and open source software
+Distributed under the terms of the `MIT license`, sketchymaths free and open source software
 
 
 Issues
