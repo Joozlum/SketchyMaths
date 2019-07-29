@@ -11,6 +11,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
 
+
 class labelsavename(Label):
     pass
 
@@ -20,6 +21,18 @@ class SketchySave(Screen):
     def on_enter(self, *args):
         super(SketchySave, self).on_enter(*args)
         self.savenametextinput.text = str(datetime.datetime.today())
+        self.callback_size_y(height=self.height)
+        self.callback_size_x(width=self.width)
+        self.previous_saves()
+
+
+    def previous_saves(self):
+        self.paddingbox.text = 'Previous Saves:'
+        sketchybook = shelve.open('data/SketchyBook')
+        for save in sketchybook:
+            self.paddingbox.text += '\n'
+            self.paddingbox.text += "{save}".format(save=save)
+        sketchybook.close()
 
     def __init__(self, **kwargs):
         super(SketchySave, self).__init__(**kwargs)
@@ -28,7 +41,6 @@ class SketchySave(Screen):
 
         self.savetextbox = BoxLayout()
         self.savetextbox.orientation = 'horizontal'
-        self.savetextbox.size_hint_y = .4
 
         self.labelsavename = labelsavename()
         self.labelsavename.text = 'Name this save file:'
@@ -41,10 +53,12 @@ class SketchySave(Screen):
 
         self.savenametextinput = TextInput()
         self.savenametextinput.text = str(datetime.datetime.today())
-        self.savenametextinput.size_hint_y = .2
+
+        self.paddingbox = Label()
+        self.paddingbox.valign = 'top'
+        self.paddingbox.padding = (20, 20)
 
         self.buttonbox = BoxLayout()
-        self.buttonbox.size_hint_y = 0.4
 
         self.savebutton = Button()
         self.savebutton.text = 'Save'
@@ -62,14 +76,23 @@ class SketchySave(Screen):
 
         self.saveboxlayout.add_widget(self.savetextbox)
         self.saveboxlayout.add_widget(self.savenametextinput)
+        self.saveboxlayout.add_widget(self.paddingbox)
         self.saveboxlayout.add_widget(self.buttonbox)
 
         self.add_widget(self.saveboxlayout)
+        self.bind(height=self.callback_size_y)
+        self.bind(width=self.callback_size_x)
 
-        # self.labelsavename.max_lines = 1
-        # self.labelsavename.texture_size = (self.labelsavename.width, self.savetextbox.height/2)
-        # #self.labelsavename.text_size = (self.labelsavename.width, self.savetextbox.height/2)
-        # self.labelsavename.valign = 'bottom'
+    def callback_size_y(self, target=None, height=100):
+        self.savetextbox.size_hint_y = 120 / height
+        self.savenametextinput.size_hint_y = 40 / height
+        self.paddingbox.size_hint_y = (height - 220) / height
+        self.buttonbox.size_hint_y = 60 / height
+        self.paddingbox.text_size = self.paddingbox.size
+
+    def callback_size_x(self, target=None, width=100):
+        self.paddingbox.text_size = self.paddingbox.size
+
 
     def get_equation_dictionary(self):
         equation_dictionary = self.parent.save_data()
@@ -93,6 +116,7 @@ class SketchySave(Screen):
 
         self.labelsavestatus.text = self.savenametextinput.text + '\nSaved!'
         self.labelsavestatus.text += '\n' + str(datetime.datetime.now())
+        self.previous_saves()
 
     def callback_returnbutton(self, target):
         #  Return to 'main' window

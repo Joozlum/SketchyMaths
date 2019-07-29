@@ -286,29 +286,8 @@ class SketchyMath(BoxLayout):
         del self.equations[key]
         self.blackboard.remove_widget(uid)
 
-#  todo
-#   Add tuple (date, length of equation dictionary) to beginning of save data
-#   Adjust save method so that it adds save data on a new  line in text rather than rewriting it
-#       Add a confirmation popup that appears for a few seconds on screen that deletes itself
-#   Modify load function so that it goes to a new screen that displays a list of all the save
-#   data, with the option of loading or deleting each one.
-
-    def save_function(self, equation_dictionary: dict):
-        t = str(datetime.datetime.today())
-        data = []
-        for inst in equation_dictionary.values():
-            x = (inst.equation_id, inst.pos, inst.equation_text)
-            data.append(x)
-        sketchybook = shelve.open('data/SketchyBook')
-        sketchybook[t] = pickle.dumps(data)
-        sketchybook.close()
-
 
     def load_function(self, data):
-        #  todo
-        #   Create a load function that takes the first part of a save data line and makes
-        #   a dictionary{'name': line} that can be displayed as a list with a load button
-        #   on the right and a delete button on the left
         if self.equations is not None:
             for inst in self.equations.values():
                 self.blackboard.remove_widget(inst)
