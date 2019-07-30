@@ -1,9 +1,4 @@
-import datetime
-import json
-import pickle
-import shelve
 from math import atan2, cos, sin
-
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.graphics.context_instructions import Color
@@ -14,7 +9,7 @@ from kivy.uix.label import Label
 from kivy.uix.scatter import Scatter
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.textinput import TextInput
-from kivy.properties import ObjectProperty, StringProperty, NumericProperty, DictProperty
+from kivy.properties import ObjectProperty, StringProperty, DictProperty
 from sketchymaths import sketchymathmethods, sketchyload, sketchysave
 
 
@@ -54,6 +49,7 @@ class EquationScatter(Scatter):
     root = ObjectProperty(None)
     equation_id = StringProperty('')
     text = StringProperty('Click me and type above!')
+    focused_text = ''
 
     def __init__(self, **kwargs):
         super(EquationScatter, self).__init__(**kwargs)
@@ -113,11 +109,29 @@ class EquationScatter(Scatter):
     def dependency_clear(self):
         pass
 
+    def text_editor_focus_control(self, target=None, value=None):
+        if self.focused_text == 'IDT':
+            self.root.ET.focus = True
+            self.root.ET.select_all()
+            self.focused_text = 'ET'
+            return
+        if self.focused_text == 'ET':
+            self.root.IDT.focus = True
+            self.root.IDT.select_all()
+            self.focused_text = 'IDT'
+            return
+        self.root.ET.focus = True
+        self.root.ET.select_all()
+        self.focused_text = 'ET'
+
+
     #  Bind EquationEditor to callback text_focus
     def equation_bind(self):
         if self.root.previous_equation is not None:
             self.root.ET.funbind('text', self.root.previous_equation.text_focus)
             self.root.IDT.funbind('text', self.root.previous_equation.id_text_focus)
+            if self.root.previous_equation != self:
+                self.root.previous_equation.focused_text = 'None'
             self.root.previous_equation.children[1].bold = False
 
         #  Set EquationEditor text to focused equation and bind them
@@ -127,8 +141,6 @@ class EquationScatter(Scatter):
         #  Set id Editor text to focused equation's id and bind them
         self.root.IDT.text = str(self.equation_id)
         self.root.IDT.fbind('text', self.id_text_focus)
-
-
 
         #  if previous_equation is empty then call for deletion
         if self.root.previous_equation is not None:
@@ -180,19 +192,18 @@ class EquationScatter(Scatter):
 class BlackBoard(FloatLayout):
     root = ObjectProperty(None)
 
-    #  Switches focus to EquationEditor for smoother use
-    #  todo
-    #   Fix how this gets called, as it is calling it twice each time
+    #  Switches focus to EquationEditor or to IDEditor for smoother use
     def on_touch_up(self, touch, after=False):
-        if after:
-            if self.root.previous_equation is not None \
-                    and self.root.previous_equation.collide_point(*touch.pos):
-                self.root.ET.focus = True
-                self.root.ET.select_all()
 
-        else:
-            Clock.schedule_once(lambda dt: self.on_touch_up(touch, True))
-            return super(BlackBoard, self).on_touch_up(touch)
+        #  If there is a previous_equation, and the previous equation is the current one
+        if self.root.previous_equation is not None \
+                and self.root.previous_equation.collide_point(*touch.pos):
+            if after:
+                self.root.previous_equation.text_editor_focus_control()
+                return
+            else:
+                Clock.schedule_once(lambda dt: self.on_touch_up(touch, True))
+        return super(BlackBoard, self).on_touch_up(touch)
 
     def draw_connections(self, *args):
         """
@@ -258,6 +269,9 @@ class SketchyMath(BoxLayout):
     def __init__(self, **kwargs):
         super(SketchyMath, self).__init__(**kwargs)
 
+        #  todo
+        #   add Labels above/beside each text input to clarify what they are for
+
         self.texteditorbox = BoxLayout()
         self.texteditorbox.orientation = 'horizontal'
         self.texteditorbox.size_hint_y = None
@@ -266,10 +280,10 @@ class SketchyMath(BoxLayout):
         self.IDT = EquationEditor()
         self.IDT.root = self
         self.IDT.text = ''
-        self.IDT.size_hint_x = .2
+        self.IDT.size_hint_x = .25
 
         self.ET = EquationEditor(root=self)
-        self.ET.size_hint_x = .8
+        self.ET.size_hint_x = .75
 
         self.blackboard = BlackBoard(size=self.size, root=self)
 
