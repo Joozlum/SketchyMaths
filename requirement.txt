@@ -1,0 +1,16 @@
+SketchyMaths==0.9.0
+Kivy==1.11.1
+  - docutils [required: Any]
+  - Kivy-Garden [required: >=0.1.4]
+    - requests [required: Any]
+      - certifi [required: >=2017.4.17]
+      - chardet [required: >=3.0.2,<3.1.0]
+      - idna [required: >=2.5,<2.9]
+      - urllib3 [required: >=1.21.1,<1.26,!=1.25.1,!=1.25.0]
+  - pygments [required: Any]
+kivy-deps.glew==0.1.12
+kivy-deps.gstreamer==0.1.17
+kivy-deps.sdl2==0.1.22
+pypiwin32==223
+  - pywin32 [required: >=223, installed: 224]
+wheel==0.33.4
