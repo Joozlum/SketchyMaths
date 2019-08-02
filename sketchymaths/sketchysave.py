@@ -99,7 +99,7 @@ class SketchySave(Screen):
         equation_dictionary = self.parent.save_data()
         data = []
         for inst in equation_dictionary.values():
-            x = (inst.equation_id, inst.pos, inst.equation_text)
+            x = (inst.equation_id, inst.pos, inst.equation_text, inst.equationlabel.font_size)
             data.append(x)
         return data
 

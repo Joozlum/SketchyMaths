@@ -3,6 +3,7 @@ from kivy.app import App
 from kivy.clock import Clock
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.vertex_instructions import Line
+from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
@@ -12,6 +13,11 @@ from kivy.uix.textinput import TextInput
 from kivy.properties import ObjectProperty, StringProperty, DictProperty
 from sketchymaths import sketchymathmethods, sketchyload, sketchysave
 
+#  Disable multitouch
+from kivy.config import Config
+Config.set('input', 'mouse', 'mouse,disable_multitouch')
+
+DEPTH_LIMIT = 30
 
 class SketchyMain(Screen):
     pass
@@ -32,16 +38,10 @@ class SketchyScreens(ScreenManager):
 class EquationEditor(TextInput):
     root = ObjectProperty(None)
 
-    def __init__(self, **kwargs):
-        super(EquationEditor, self).__init__(**kwargs)
-        self.bind(on_text_validate=self.on_enter)
-
-    def on_enter(self, *args):
-        pass
-
 
 class EquationLabel(Label):
-    pass
+    def on_parent(self, widget, parent):
+        parent.equationlabel = self
 
 
 class EquationScatter(Scatter):
@@ -50,26 +50,36 @@ class EquationScatter(Scatter):
     equation_id = StringProperty('')
     text = StringProperty('Click me and type above!')
     focused_text = ''
+    equationlabel = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super(EquationScatter, self).__init__(**kwargs)
         self.fbind('equation_text', self.update_text)
-        self.equation_display = Label(font_size=12, color=[1, 0, 0, 1], height=-15)
-        self.add_widget(self.equation_display)
-        self.bind(equation_text=self.equation_display.setter('text'))
+        # self.equation_display = Label(font_size=12, color=[1, 0, 0, 1], height=-15)
+        # self.add_widget(self.equation_display)
+        # self.bind(equation_text=self.equation_display.setter('text'))
 
-    def evaluate(self, equation, origin=None, internal=False):
+    def evaluate(self, equation, origin=None, internal=False, depth_limit=0):
         """
         Evaluate equation while replacing references with their target.
         Includes error checking to prevent self referencing.
         If any references reference this equation '(Self)' will be
         displayed.
 
-        :param equation:
-        :param origin:
-        :param internal:
+        origin is the original equation when evaluate calls itself
+        internal is set to True when evaluate is called inside of itself
+
+        :param equation: str
+        :param origin: object
+        :param internal: boolean
         :return:
         """
+        if depth_limit > DEPTH_LIMIT:
+            return '*DEPTH_LIMIT*'
+        if '#' in equation:
+            self.evaluation_completed_check('comment')
+            return equation
+
         if not internal:
             origin = self
 
@@ -81,17 +91,32 @@ class EquationScatter(Scatter):
                     equation = equation.replace(":%s:" % key,
                                                 "(%s)" % self.root.equations[key].evaluate(
                                                     self.root.equations[key].equation_text, internal=True,
-                                                    origin=origin))
+                                                    origin=origin, depth_limit=depth_limit+1))
                 else:
                     equation = equation.replace(":%s:" % key, "(Self)")
         #  evaluate the equation
         try:
             result = str(eval(equation, {'__builtins__': None}, sketchymathmethods.sketchy_dict))
+            success = True
         except:
             result = equation
+            success = False
         if internal:
-            return result
+            if success:
+                return result
+            if not success:
+                return self.equation_id
+
+        self.evaluation_completed_check(success)
         return "(%s)= %s" % (self.equation_id, result)
+
+    def evaluation_completed_check(self, success):
+        if success == 'comment':
+            self.equationlabel.color = (0, .8, 1)
+        elif success:
+            self.equationlabel.color = (1, 1, 1)
+        elif not success:
+            self.equationlabel.color = (.5, .5, .5)
 
     #  Run a dependency test as well as the binding callback
     #  todo
@@ -109,38 +134,40 @@ class EquationScatter(Scatter):
     def dependency_clear(self):
         pass
 
+    #  Used on_touch_up to select all text in equation_editor
+    #  or all text in equation name editor and set keyboard focus
     def text_editor_focus_control(self, target=None, value=None):
-        if self.focused_text == 'IDT':
-            self.root.ET.focus = True
-            self.root.ET.select_all()
-            self.focused_text = 'ET'
+        if self.focused_text == 'equation_name_editor':
+            self.root.equation_editor.focus = True
+            self.root.equation_editor.select_all()
+            self.focused_text = 'equation_editor'
             return
-        if self.focused_text == 'ET':
-            self.root.IDT.focus = True
-            self.root.IDT.select_all()
-            self.focused_text = 'IDT'
+        if self.focused_text == 'equation_editor':
+            self.root.equation_name_editor.focus = True
+            self.root.equation_name_editor.select_all()
+            self.focused_text = 'equation_name_editor'
             return
-        self.root.ET.focus = True
-        self.root.ET.select_all()
-        self.focused_text = 'ET'
+        self.root.equation_editor.focus = True
+        self.root.equation_editor.select_all()
+        self.focused_text = 'equation_editor'
 
 
     #  Bind EquationEditor to callback text_focus
     def equation_bind(self):
         if self.root.previous_equation is not None:
-            self.root.ET.funbind('text', self.root.previous_equation.text_focus)
-            self.root.IDT.funbind('text', self.root.previous_equation.id_text_focus)
+            self.root.equation_editor.funbind('text', self.root.previous_equation.text_focus)
+            self.root.equation_name_editor.funbind('text', self.root.previous_equation.id_text_focus)
             if self.root.previous_equation != self:
                 self.root.previous_equation.focused_text = 'None'
-            self.root.previous_equation.children[1].bold = False
+            self.root.previous_equation.equationlabel.bold = False
 
         #  Set EquationEditor text to focused equation and bind them
-        self.root.ET.text = self.equation_text
-        self.root.ET.fbind('text', self.text_focus)
+        self.root.equation_editor.text = self.equation_text
+        self.root.equation_editor.fbind('text', self.text_focus)
 
         #  Set id Editor text to focused equation's id and bind them
-        self.root.IDT.text = str(self.equation_id)
-        self.root.IDT.fbind('text', self.id_text_focus)
+        self.root.equation_name_editor.text = str(self.equation_id)
+        self.root.equation_name_editor.fbind('text', self.id_text_focus)
 
         #  if previous_equation is empty then call for deletion
         if self.root.previous_equation is not None:
@@ -148,9 +175,9 @@ class EquationScatter(Scatter):
                 self.root.delete_equation()
 
         self.root.previous_equation = self
-        self.children[1].bold = True
+        self.equationlabel.bold = True
 
-    #  Callback for binding EquationEditor text to equation text
+    #  Callback for binding equation_editor text to equation_text
     def text_focus(self, target, value=None):
         if target.text == '':
             self.equation_text = 'empty'  # Display empty if text is blank
@@ -164,16 +191,33 @@ class EquationScatter(Scatter):
     def on_touch_down(self, touch):
         super(EquationScatter, self).on_touch_down(touch)
         if self.collide_point(*touch.pos):
-            self.equation_bind()
-            self.test_dependencies()
+            if touch.button == 'left':
+                self.equation_bind()
+                self.test_dependencies()
+            elif touch.button == 'middle':
+                if self != self.root.previous_equation:
+                    self.root.equation_editor.insert_text(':{id}:'.format(id=self.equation_id))
+            elif touch.button == 'scrollup' or touch.button == 'scrolldown':
+                self.text_size_change(self, touch.button)
 
+    #  Adjust size of equationlabel
+    def text_size_change(self, target, value):
+        if value == "scrollup"\
+                and target.equationlabel.font_size > 8:
+            target.equationlabel.font_size -= 1
+        elif value == "scrolldown":
+            target.equationlabel.font_size += 1
+
+    #  Callback for binding equation_name_editor to equation_id
     def id_text_focus(self, target, value=None):
         self.update_equation_id(target.text)
-        self.update_text(None)
+        self.update_text(None)  # update its own text so new id is displayed
 
     def update_equation_id(self, new_id):
         """
-
+        Updates equations dictionary to reflect new equation_id
+        If empty returns without changing
+        If a colon is in the name it replaces it with a semi-colon to prevent errors in evaluate
         :type new_id: str
         """
         if new_id == '':
@@ -186,18 +230,33 @@ class EquationScatter(Scatter):
         if self.equation_id in self.root.equations:
             del self.root.equations[self.equation_id]
         self.root.equations[new_id] = self
+        self.update_equation_id_dependancies(self.equation_id, new_id)
         self.equation_id = new_id
+
+    def update_equation_id_dependancies(self, old_id, new_id):
+        old_id = ':{old_id}:'.format(old_id=old_id)
+        new_id = ':{new_id}:'.format(new_id=new_id)
+        for inst in self.root.equations.values():
+            if old_id in inst.equation_text:
+                inst.equation_text = inst.equation_text.replace(old_id, new_id)
 
 
 class BlackBoard(FloatLayout):
     root = ObjectProperty(None)
+
+    #  For capturing middle mouse button
+    def on_touch_down(self, touch):
+        if touch.button == 'middle':
+            FocusBehavior.ignored_touch.append(touch)
+        super(BlackBoard, self).on_touch_down(touch)
 
     #  Switches focus to EquationEditor or to IDEditor for smoother use
     def on_touch_up(self, touch, after=False):
 
         #  If there is a previous_equation, and the previous equation is the current one
         if self.root.previous_equation is not None \
-                and self.root.previous_equation.collide_point(*touch.pos):
+                and self.root.previous_equation.collide_point(*touch.pos)\
+                and touch.button == 'left':
             if after:
                 self.root.previous_equation.text_editor_focus_control()
                 return
@@ -207,7 +266,8 @@ class BlackBoard(FloatLayout):
 
     def draw_connections(self, *args):
         """
-        If connections are found, call the draw_connection function to draw a line
+        If connections are found, call the draw_connection function with the arguments
+        returned by the process_connections function
 
         :param args:
         :return:
@@ -217,17 +277,16 @@ class BlackBoard(FloatLayout):
             for check in self.root.equations.values():
                 if inst != check:
                     if ':%s:' % inst.equation_id in check.equation_text:
-                        # self.root.draw_connection(first_point=inst.center, second_point=check.center)
                         self.root.draw_connection(self.process_connections(inst, check))
 
     def process_connections(self, inst1, inst2):
         """
         Takes in two instances and using their position properties determines what
-        points to send to the draw_connection function
+        points to use to draw a line between them along with an arrow
 
         :param inst1:
         :param inst2:
-        :return:
+        :return: List of points to draw a line through
         """
         x_change = inst2.center_x - inst1.center_x
         y_change = inst2.center_y - inst1.center_y
@@ -254,10 +313,10 @@ class BlackBoard(FloatLayout):
         x0 = x2 - x1
         y0 = y2 - y1
         angle = atan2(y0, x0)
-        ax = -10 * cos(angle + .3) + x2
-        ay = -10 * sin(angle + .3) + y2
-        bx = -10 * cos(angle - .3) + x2
-        by = -10 * sin(angle - .3) + y2
+        ax = -15 * cos(angle + .3) + x2
+        ay = -15 * sin(angle + .3) + y2
+        bx = -15 * cos(angle - .3) + x2
+        by = -15 * sin(angle - .3) + y2
 
         return x1, y1, x2, y2, ax, ay, bx, by, x2, y2
 
@@ -277,18 +336,18 @@ class SketchyMath(BoxLayout):
         self.texteditorbox.size_hint_y = None
         self.texteditorbox.height = 40
 
-        self.IDT = EquationEditor()
-        self.IDT.root = self
-        self.IDT.text = ''
-        self.IDT.size_hint_x = .25
+        self.equation_name_editor = EquationEditor()
+        self.equation_name_editor.root = self
+        self.equation_name_editor.text = ''
+        self.equation_name_editor.size_hint_x = .25
 
-        self.ET = EquationEditor(root=self)
-        self.ET.size_hint_x = .75
+        self.equation_editor = EquationEditor(root=self)
+        self.equation_editor.size_hint_x = .75
 
         self.blackboard = BlackBoard(size=self.size, root=self)
 
-        self.texteditorbox.add_widget(self.IDT)
-        self.texteditorbox.add_widget(self.ET)
+        self.texteditorbox.add_widget(self.equation_name_editor)
+        self.texteditorbox.add_widget(self.equation_editor)
 
         self.add_widget(self.texteditorbox)
         self.add_widget(self.blackboard)
@@ -323,7 +382,8 @@ class SketchyMath(BoxLayout):
     def on_touch_down(self, touch):
         super(SketchyMath, self).on_touch_down(touch)
         if self.blackboard.collide_point(*touch.pos):
-            if touch.is_double_tap:
+            if touch.is_double_tap\
+                    and touch.button == 'left':
                 for inst in self.equations.values():
                     if inst.collide_point(*touch.pos):
                         return
@@ -365,6 +425,7 @@ class SketchyMath(BoxLayout):
                 self.equations[str(save[0])] = eq
                 self.blackboard.add_widget(eq)
                 eq.equation_text = str(save[2])
+                eq.equationlabel.font_size = save[3]
         for inst in self.equations.values():
             inst.update_text(target=None)
 
