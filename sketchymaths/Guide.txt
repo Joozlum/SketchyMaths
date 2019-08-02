@@ -1,38 +1,56 @@
-Doubleclick/doubletap anywhere in the black background to create a new equation.
+[size=30][b][u]Controls:[/b][/u][/size]
+-Double-Click or Double-Tap:
+Creates new Equation
 
-The TextInput at the top of the screen edits the equation.
-    -Whatever equation you last clicked/touched appears in the TextInput where you can edit it.
+-Left Click on a different Equation:
+Switch focus of text inputs to different Equation
+
+-Left Click on Equation already in focus:
+Switch keyboard focus between Equation Text and Equation Name and selects all text in new focus
+
+-Middle Mouse Button:
+Insert :name: of Equation clicked on (unless clicking on self) into text input.
+
+-Scroll Wheel over an Equation
+This will increase or decrease the font size of the Equation
+
+[size=30][b][u]Behaviors[/b][/u][/size]
+
+-type ':equation name:' to reference a different equation inside of another one
+-References will be evaluated just the same as if you had entered in their result
+(e.g. if you have one equation (x0)= 1+1 then type :x0:+1 into a different equation, it will display '3'.
+These references will also be displayed by a line showing the path of the reference.
+(from the equation referenced to the equation referencing it.)
+
+-Equations that are successfully evaluated will be white, while equations that could not be evaluated will appear grey.
+
+-If you type '#' anywhere in the equation text it will skip evaluation and become a comment, and the text will appear light blue.
+
+-Since colons ':' are used to find references, you cannot have them in your equation names.
+If you try they will be replaced with semi-colons.
+
+-If you decide to manually enter in a self reference to an equation it will display (Self) to remind you that you tried to start an infinite loop.
+(There is also a DEPTH_LIMIT of 30, so if you make strange references that end up in a loop it should be okay, though you won't get a solution)
+
+The two text inputs at the top of the screen edit the equation and its name.
+    -Whatever equation you last clicked appears in the TextInput where you can edit it.
     -New equations automatically take over the focus of the TextInput
+    -Equations appear in bold when they are in focus.
 
-Each equation is created with an id, displayed as 'f(x)='
-    -Type ':x:' with x being the id of another equation to reference that equation.
-    -These references will be displayed by an arrow pointing from the equation referenced
-    to the equation referencing it.
+Each equation is created with a generic id 'x0' that can be changed by typing in the left text input.
+    -Type ':x0:' with x0 being the name of another equation to reference that equation.
+    -These references will be displayed by an arrow pointing from the equation referenced to the equation referencing it.
+    -Middle clicking on another equation will automatically insert the equation's name into the text input.
 
-Equations are updated as you type, and any equations referencing the one you are currently
-editing will also update.
+Equations are updated as you type, and any equations referencing the one you are currently editing will also update.
 
-To deleted an equation, click on it and clear its text ('empty' will be displayed).  Then
-when you click on a different equation, or create a new one, the 'empty' one will be deleted.
+To deleted an equation, click on it and clear its text ('empty' will be displayed).
+Then when you click on a different equation, or create a new one, the 'empty' one will be deleted.
 
 Equations can be dragged around and rearranged on the screen.
 
-The equations accept basic math functions, such as addition, subtraction, multiplication,
-and division, using the expected symbols (+,-,*,/).  Exponents use the python notation of
-a double asterisk (**).  The python.math functions are also called inside of the equations,
-allowing for things such as sin(x), cos(x), tan(x), sqrt(x), or so on.  A full list will
-appear in a shortcuts menu.  Constants such as 'e' or 'pi' also work.
+The equations accept basic math functions, such as addition, subtraction, multiplication, and division, using the expected symbols (+,-,*,/).
+Exponents use the python notation of a double asterisk (**).
+The python.math functions are also called inside of the equations, allowing for things such as sin(x), cos(x), tan(x), sqrt(x), or so on.
 
-
-There are tests to make sure that an equation cannot reference itself, and if you try you'll
-see '(Self)' displayed, showing that you have a self reference.  This should happen even if
-the self reference is from another equation.  e.g. f(0)= :1: and f(1)= :0:  while f(1) is
-calling f(0), f(0)'s result is f(1), so it is essentially making a call to itself.  This
-should display f(0)= ((Self)), f(1)= ((Self)).  A parenthesis is added for each level of
-evaluation, so seeing two sets of parenthesis means that the self call is two levels deep.
-
-Everything is displayed on a scatterlayout, so touch controls are allow depending on what
-you are running this app on.  If you are using a mouse, right clicking mimics touch
-controls, displaying red circles for each touch.  Right clicking in two places and then
-dragging the resulting red circles functions as if you were doing that same motion with
-two fingers (e.g. pinching shrinks, pulling apart enlarges).
+Constants such as 'e' or 'pi' also work.

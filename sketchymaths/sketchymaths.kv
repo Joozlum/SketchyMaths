@@ -27,6 +27,7 @@ SketchyScreens:
     size_hint: None, None
     size: label_equation.size
 
+#  for debugging appearance
 #    canvas.after:
 #        Color:
 #            rgba: 0, 1, 0, 0.2
@@ -52,11 +53,12 @@ SketchyScreens:
 
 <SketchyMain>:
     name: 'main'
+    sketchy_maths: sketchy_maths
     BoxLayout:
         orientation: 'vertical'
         SketchyMath:
             name: 'maths'
-            id: math_junk
+            id: sketchy_maths
 
         BoxLayout:
             orientation: 'horizontal'
@@ -73,6 +75,15 @@ SketchyScreens:
                 text: 'Load'
                 font_size: 20
                 on_release: app.root.current = 'load'
+            Button:
+                text: 'Clear'
+                font_size: 20
+                on_release:
+                    root.sketchy_maths.load_function(data=None)
+            Button:
+                text: 'Quit'
+                font_size: 20
+                on_release: app.stop()
 
 <SketchyLoad>:
     name: 'load'
@@ -93,6 +104,7 @@ SketchyScreens:
                 height: self.texture_size[1]
                 text_size: self.width, None
                 padding: 10, 10
+                markup: True
                 font_size: 20
                 text: gt.guide_text
         BoxLayout:
@@ -102,7 +114,7 @@ SketchyScreens:
                 text: 'Guide'
                 on_release: guide_label.text = gt.guide_text
             Button:
-                text: 'Methods'
+                text: 'Shortcuts'
                 on_release: guide_label.text = gt.methods_text
             Button:
                 text: 'Return'

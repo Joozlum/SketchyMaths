@@ -27,7 +27,7 @@ class SketchySave(Screen):
 
 
     def previous_saves(self):
-        self.paddingbox.text = 'Previous Saves:'
+        self.paddingbox.text = 'Previous Saves:\n'
         sketchybook = shelve.open('data/SketchyBook')
         for save in sketchybook:
             self.paddingbox.text += '\n'
@@ -57,6 +57,7 @@ class SketchySave(Screen):
         self.paddingbox = Label()
         self.paddingbox.valign = 'top'
         self.paddingbox.padding = (20, 20)
+        self.paddingbox.font_size = 20
 
         self.buttonbox = BoxLayout()
 
@@ -98,7 +99,7 @@ class SketchySave(Screen):
         equation_dictionary = self.parent.save_data()
         data = []
         for inst in equation_dictionary.values():
-            x = (inst.equation_id, inst.pos, inst.equation_text)
+            x = (inst.equation_id, inst.pos, inst.equation_text, inst.equationlabel.font_size)
             data.append(x)
         return data
 
