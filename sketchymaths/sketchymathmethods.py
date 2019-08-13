@@ -1,13 +1,14 @@
 import math
 
-sketchy_dict = {'acos': math.acos, 'asin': math.asin,
+sketchy_dict = {'int': int, 'acos': math.acos, 'asin': math.asin,
              'atan': math.atan, 'atan2': math.atan2, 'ceil': math.ceil,
              'cos': math.cos, 'cosh': math.cosh, 'degrees': math.degrees,
              'e': math.e, 'exp': math.exp, 'fabs': math.fabs, 'floor': math.floor,
              'fmod': math.fmod, 'frexp': math.frexp, 'hypot': math.hypot,
              'ldexp': math.ldexp, 'log': math.log, 'log10': math.log10,
              'modf': math.modf, 'pi': math.pi, 'pow': math.pow, 'radians': math.radians,
-             'sin': math.sin, 'sinh': math.sinh, 'sqrt': math.sqrt, 'tan': math.tan, 'tanh': math.tanh}
+             'sin': math.sin, 'sinh': math.sinh, 'sqrt': math.sqrt, 'tan': math.tan, 'tanh': math.tanh,
+             'bin': bin}
 
 #   Adding custom methods to equation evaluation.
 #   Let's say you have some function that you want to use, or if you have a list of constants

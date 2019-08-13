@@ -415,9 +415,10 @@ class SketchyMath(BoxLayout):
 
     def delete_equation(self):
         key = str(self.previous_equation.equation_id)
-        uid = self.equations[key]
-        del self.equations[key]
-        self.blackboard.remove_widget(uid)
+        if key in self.equations:
+            uid = self.equations[key]
+            del self.equations[key]
+            self.blackboard.remove_widget(uid)
 
 
     def load_function(self, data):
