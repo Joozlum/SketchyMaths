@@ -6,6 +6,7 @@ from kivy.graphics.vertex_instructions import Line
 from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.scatter import Scatter
 from kivy.uix.screenmanager import ScreenManager, Screen
@@ -18,6 +19,7 @@ from kivy.config import Config
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
 DEPTH_LIMIT = 30
+
 
 class SketchyMain(Screen):
     pass
@@ -33,6 +35,9 @@ class SketchyScreens(ScreenManager):
 
     def save_data(self):
         return self.get_screen('main').children[0].children[1].equations
+
+class GenericLabel(Label):
+    pass
 
 
 class EquationEditor(TextInput):
@@ -151,7 +156,6 @@ class EquationScatter(Scatter):
         self.root.equation_editor.select_all()
         self.focused_text = 'equation_editor'
 
-
     #  Bind EquationEditor to callback text_focus
     def equation_bind(self):
         if self.root.previous_equation is not None:
@@ -230,10 +234,10 @@ class EquationScatter(Scatter):
         if self.equation_id in self.root.equations:
             del self.root.equations[self.equation_id]
         self.root.equations[new_id] = self
-        self.update_equation_id_dependancies(self.equation_id, new_id)
+        self.update_equation_id_dependencies(self.equation_id, new_id)
         self.equation_id = new_id
 
-    def update_equation_id_dependancies(self, old_id, new_id):
+    def update_equation_id_dependencies(self, old_id, new_id):
         old_id = ':{old_id}:'.format(old_id=old_id)
         new_id = ':{new_id}:'.format(new_id=new_id)
         for inst in self.root.equations.values():
@@ -328,13 +332,17 @@ class SketchyMath(BoxLayout):
     def __init__(self, **kwargs):
         super(SketchyMath, self).__init__(**kwargs)
 
-        #  todo
-        #   add Labels above/beside each text input to clarify what they are for
-
-        self.texteditorbox = BoxLayout()
-        self.texteditorbox.orientation = 'horizontal'
+        self.texteditorbox = GridLayout(cols=2)
         self.texteditorbox.size_hint_y = None
-        self.texteditorbox.height = 40
+        self.texteditorbox.height = 60
+
+        self.equation_name_label = GenericLabel()
+        self.equation_name_label.text = 'Equation Name:'
+        self.equation_name_label.size_hint = (.25, .2)
+
+        self.equation_text_label = GenericLabel()
+        self.equation_text_label.text = 'Equation:'
+        self.equation_text_label.size_hint = (.75, .8)
 
         self.equation_name_editor = EquationEditor()
         self.equation_name_editor.root = self
@@ -346,6 +354,8 @@ class SketchyMath(BoxLayout):
 
         self.blackboard = BlackBoard(size=self.size, root=self)
 
+        self.texteditorbox.add_widget(self.equation_name_label)
+        self.texteditorbox.add_widget(self.equation_text_label)
         self.texteditorbox.add_widget(self.equation_name_editor)
         self.texteditorbox.add_widget(self.equation_editor)
 
@@ -405,9 +415,10 @@ class SketchyMath(BoxLayout):
 
     def delete_equation(self):
         key = str(self.previous_equation.equation_id)
-        uid = self.equations[key]
-        del self.equations[key]
-        self.blackboard.remove_widget(uid)
+        if key in self.equations:
+            uid = self.equations[key]
+            del self.equations[key]
+            self.blackboard.remove_widget(uid)
 
 
     def load_function(self, data):
@@ -431,10 +442,6 @@ class SketchyMath(BoxLayout):
 
 
 class SketchyMathsApp(App):
-    """Basic kivy app
-
-    Edit sketchymaths.kv to get started.
-    """
 
     def build(self):
         return self.root
