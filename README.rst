@@ -12,46 +12,29 @@ with the changing results.
 
 Features
 --------
+* Evaluates most mathematical equations
+* Allows for multiple equations to be evaluated separately
+* The result of one equation can be used in another equation.
+* If one equation is changed any other equations dependant on it are also updated.
 
-* TODO
+
+** TODO
     * Create settings window
     * Clean up code
     * Make arrows fancier and avoid crossing other equations
+    * Add methods to zoom in and out globally
 
 Usage
 -----
 
 Launching the app
 ~~~~~~~~~~~~~~~~~
+Check requirements.txt to see if dependencies are installed.
 
 `Kivy` is compatible with Python 2 as well as Python 3::
 
     cd sketchymaths
     python main.py
-
-Running the testsuite
-~~~~~~~~~~~~~~~~~~~~~
-
-Run its testsuite either with Python3::
-
-    cd sketchymaths
-    python -m unittest discover
-
-Or with `nose`::
-
-    cd sketchymaths
-    nosetests
-
-Or with `py.test`::
-
-    cd sketchymaths
-    py.test
-
-Deploying to Android
-~~~~~~~~~~~~~~~~~~~~
-
-You can easily run the app on Android by using the `Kivy Launcher`.
-
 
 License
 -------

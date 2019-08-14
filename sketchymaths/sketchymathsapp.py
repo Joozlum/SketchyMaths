@@ -20,6 +20,14 @@ Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
 DEPTH_LIMIT = 30
 
+# todo
+#   Create Global Zoom:
+#       global variables needed to control zoom
+#           Font Size modifier
+#           Position modifier
+#       local functions needed to scale view
+#
+
 
 class SketchyMain(Screen):
     pass
@@ -124,9 +132,6 @@ class EquationScatter(Scatter):
             self.equationlabel.color = (.5, .5, .5)
 
     #  Run a dependency test as well as the binding callback
-    #  todo
-    #   Clean up this code to make sure it isn't creating
-    #   duplicate dependencies.
     def test_dependencies(self, internal=False, previous=None):
 
         for inst in self.root.equations.values():
@@ -419,7 +424,6 @@ class SketchyMath(BoxLayout):
             uid = self.equations[key]
             del self.equations[key]
             self.blackboard.remove_widget(uid)
-
 
     def load_function(self, data):
         if self.equations is not None:
