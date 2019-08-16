@@ -22,7 +22,6 @@ Features
     * Create settings window
     * Clean up code
     * Make arrows fancier and avoid crossing other equations
-    * Add methods to zoom in and out globally
 
 Usage
 -----
