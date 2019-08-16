@@ -20,6 +20,14 @@ Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
 DEPTH_LIMIT = 30
 
+# todo
+#   Create Global Zoom:
+#       global variables needed to control zoom
+#           Font Size modifier
+#           Position modifier
+#       local functions needed to scale view
+#
+
 
 class SketchyMain(Screen):
     pass
@@ -124,9 +132,6 @@ class EquationScatter(Scatter):
             self.equationlabel.color = (.5, .5, .5)
 
     #  Run a dependency test as well as the binding callback
-    #  todo
-    #   Clean up this code to make sure it isn't creating
-    #   duplicate dependencies.
     def test_dependencies(self, internal=False, previous=None):
 
         for inst in self.root.equations.values():
@@ -203,14 +208,22 @@ class EquationScatter(Scatter):
                     self.root.equation_editor.insert_text(':{id}:'.format(id=self.equation_id))
             elif touch.button == 'scrollup' or touch.button == 'scrolldown':
                 self.text_size_change(self, touch.button)
+                return True
 
     #  Adjust size of equationlabel
     def text_size_change(self, target, value):
         if value == "scrollup"\
                 and target.equationlabel.font_size > 8:
-            target.equationlabel.font_size -= 1
+            self.change_font_size(-1)
         elif value == "scrolldown":
-            target.equationlabel.font_size += 1
+            self.change_font_size(1)
+
+    #  Scales font size around center of equation position, rather than from bottom left corner
+    def change_font_size(self, change):
+        original_center = self.center
+        self.equationlabel.font_size += change
+        self.equationlabel.texture_update()
+        self.center = original_center
 
     #  Callback for binding equation_name_editor to equation_id
     def id_text_focus(self, target, value=None):
@@ -248,14 +261,54 @@ class EquationScatter(Scatter):
 class BlackBoard(FloatLayout):
     root = ObjectProperty(None)
 
+    def __init__(self, **kwargs):
+        super(BlackBoard, self).__init__(**kwargs)
+
     #  For capturing middle mouse button
-    def on_touch_down(self, touch):
-        if touch.button == 'middle':
-            FocusBehavior.ignored_touch.append(touch)
-        super(BlackBoard, self).on_touch_down(touch)
+    def on_touch_down(self, touch, after=False):
+        if after:
+            if touch.button == 'middle':
+                FocusBehavior.ignored_touch.append(touch)
+            if touch.button == 'scrollup' or touch.button == 'scrolldown'\
+                    or touch.button == 'left':
+                for equation in self.root.equations.values():
+                    if equation.collide_point(*touch.pos):
+                        return
+                if touch.button == 'scrollup':
+                    self.zoom(touch.pos, -1)
+                if touch.button == 'scrolldown':
+                    self.zoom(touch.pos, 1)
+                if touch.button == 'left':
+                    touch.grab(self)
+            return
+        else:
+            Clock.schedule_once(lambda dt: self.on_touch_down(touch, True))
+        return super(BlackBoard, self).on_touch_down(touch)
+
+    def on_touch_move(self, touch):
+        if touch.grab_current is self:
+            self.drag_screen(touch.dpos)
+        else:
+            return
+
+    def zoom(self, center_point, change):
+        for equation in self.root.equations.values():
+            x = (equation.center_x - center_point[0]) * (1 + change * 0.1)
+            y = (equation.center_y - center_point[1]) * (1 + change * 0.1)
+            equation.center = (x + center_point[0], y + center_point[1])
+            f = (equation.equationlabel.font_size * (change*0.1))
+            equation.equationlabel.font_size += f
+
+    def drag_screen(self, dpos):
+        for equation in self.root.equations.values():
+            equation.x += dpos[0]
+            equation.y += dpos[1]
 
     #  Switches focus to EquationEditor or to IDEditor for smoother use
     def on_touch_up(self, touch, after=False):
+
+        if touch.grab_current is self:
+            touch.ungrab(self)
 
         #  If there is a previous_equation, and the previous equation is the current one
         if self.root.previous_equation is not None \
@@ -323,6 +376,9 @@ class BlackBoard(FloatLayout):
         by = -15 * sin(angle - .3) + y2
 
         return x1, y1, x2, y2, ax, ay, bx, by, x2, y2
+
+    def line_collision(self, point1, point2):
+        pass
 
 
 class SketchyMath(BoxLayout):
@@ -419,7 +475,6 @@ class SketchyMath(BoxLayout):
             uid = self.equations[key]
             del self.equations[key]
             self.blackboard.remove_widget(uid)
-
 
     def load_function(self, data):
         if self.equations is not None:

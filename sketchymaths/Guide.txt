@@ -8,11 +8,17 @@ Switch focus of text inputs to different Equation
 -Left Click on Equation already in focus:
 Switch keyboard focus between Equation Text and Equation Name and selects all text in new focus
 
+-Left Click and drag outside of an Equation:
+Allows you to drag the entire screen, moving all Equations at once relative to the point grabbed.
+
 -Middle Mouse Button:
 Insert :name: of Equation clicked on (unless clicking on self) into text input.
 
--Scroll Wheel over an Equation
+-Scroll Wheel over an Equation:
 This will increase or decrease the font size of the Equation
+
+-Scroll Wheel outside of an Equation:
+This will zoom in and out globally.  The zoom point is the mouse position.
 
 [size=30][b][u]Behaviors[/b][/u][/size]
 
