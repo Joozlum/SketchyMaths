@@ -35,6 +35,23 @@ Check requirements.txt to see if dependencies are installed.
     cd sketchymaths
     python main.py
 
+Adding Custom Functions
+~~~~~~~~~~~~~~~~~~~~~~~
+You can add any sort of custom function to SketchyMaths.  The examples are a simple percent conversion
+(takes in percent and converts it to a decimal) and the slightly more involved logic gate
+(takes in a gate name, followed by any number of arguments, then outputs True or False.  Also allows for changing
+what the true or false test values are, rather than the default true=1 false=0.)
+
+Here you can also add custom constants if there is a constant that you frequently use,
+such as e or pi (these are already added by default).
+
+Navigate to::
+
+    cd sketchmaths/sketchymaths
+    open sketchymathmethods.py in text editor
+    follow instructions in file
+
+
 License
 -------
 
