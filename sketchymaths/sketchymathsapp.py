@@ -20,14 +20,6 @@ Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
 DEPTH_LIMIT = 30
 
-# todo
-#   Create Global Zoom:
-#       global variables needed to control zoom
-#           Font Size modifier
-#           Position modifier
-#       local functions needed to scale view
-#
-
 
 class SketchyMain(Screen):
     pass
@@ -43,6 +35,7 @@ class SketchyScreens(ScreenManager):
 
     def save_data(self):
         return self.get_screen('main').children[0].children[1].equations
+
 
 class GenericLabel(Label):
     pass
@@ -82,6 +75,7 @@ class EquationScatter(Scatter):
         origin is the original equation when evaluate calls itself
         internal is set to True when evaluate is called inside of itself
 
+        :param depth_limit:
         :param equation: str
         :param origin: object
         :param internal: boolean
@@ -266,23 +260,24 @@ class BlackBoard(FloatLayout):
 
     #  For capturing middle mouse button
     def on_touch_down(self, touch, after=False):
-        if after:
-            if touch.button == 'middle':
-                FocusBehavior.ignored_touch.append(touch)
-            if touch.button == 'scrollup' or touch.button == 'scrolldown'\
-                    or touch.button == 'left':
-                for equation in self.root.equations.values():
-                    if equation.collide_point(*touch.pos):
-                        return
-                if touch.button == 'scrollup':
-                    self.zoom(touch.pos, -1)
-                if touch.button == 'scrolldown':
-                    self.zoom(touch.pos, 1)
-                if touch.button == 'left':
-                    touch.grab(self)
-            return
-        else:
-            Clock.schedule_once(lambda dt: self.on_touch_down(touch, True))
+        if self.collide_point(*touch.pos):
+            if after:
+                if touch.button == 'middle':
+                    FocusBehavior.ignored_touch.append(touch)
+                if touch.button == 'scrollup' or touch.button == 'scrolldown'\
+                        or touch.button == 'left':
+                    for equation in self.root.equations.values():
+                        if equation.collide_point(*touch.pos):
+                            return
+                    if touch.button == 'scrollup':
+                        self.zoom(touch.pos, -1)
+                    if touch.button == 'scrolldown':
+                        self.zoom(touch.pos, 1)
+                    if touch.button == 'left':
+                        touch.grab(self)
+                return
+            else:
+                Clock.schedule_once(lambda dt: self.on_touch_down(touch, True))
         return super(BlackBoard, self).on_touch_down(touch)
 
     def on_touch_move(self, touch):
@@ -377,9 +372,6 @@ class BlackBoard(FloatLayout):
 
         return x1, y1, x2, y2, ax, ay, bx, by, x2, y2
 
-    def line_collision(self, point1, point2):
-        pass
-
 
 class SketchyMath(BoxLayout):
     previous_equation = ObjectProperty(None)
@@ -418,8 +410,8 @@ class SketchyMath(BoxLayout):
         self.add_widget(self.texteditorbox)
         self.add_widget(self.blackboard)
 
-        #  calls function to draw lines twice a second
-        Clock.schedule_interval(self.blackboard.draw_connections, 0.5)
+        #  calls function to draw lines four times a second
+        Clock.schedule_interval(self.blackboard.draw_connections, 0.25)
 
     def new_equation(self, pos, **kwargs):
         """
