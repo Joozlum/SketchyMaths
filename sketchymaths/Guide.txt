@@ -20,6 +20,8 @@ This will increase or decrease the font size of the Equation
 -Scroll Wheel outside of an Equation:
 This will zoom in and out globally.  The zoom point is the mouse position.
 
+-'F1' will open the settings menu
+
 [size=30][b][u]Behaviors[/b][/u][/size]
 
 -type ':equation name:' to reference a different equation inside of another one

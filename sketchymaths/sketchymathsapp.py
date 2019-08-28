@@ -1,6 +1,7 @@
 from math import atan2, cos, sin
 from kivy.app import App
 from kivy.clock import Clock
+from kivy.lang import Builder
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.vertex_instructions import Line
 from kivy.uix.behaviors import FocusBehavior
@@ -13,6 +14,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.textinput import TextInput
 from kivy.properties import ObjectProperty, StringProperty, DictProperty
 from sketchymaths import sketchymathmethods, sketchyload, sketchysave
+from kivy.uix.settings import SettingsWithTabbedPanel
 
 #  Disable multitouch
 from kivy.config import Config
@@ -20,10 +22,110 @@ Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
 DEPTH_LIMIT = 30
 
+#  Text for the settings menu
+json = '''
+[
+  {
+    "type": "string",
+    "title": "Evaluated Text Color",
+    "desc": "RGB values, in x, x, x format",
+    "section": "Settings",
+    "key": "text_color_main"
+  },
+  {
+    "type": "string",
+    "title": "Unevaluated Text Color",
+    "desc": "RGB values, in x, x, x format",
+    "section": "Settings",
+    "key": "text_color_faded"
+  },
+  {
+    "type": "string",
+    "title": "Variable Text Color",
+    "desc": "RGB values, in x, x, x format",
+    "section": "Settings",
+    "key": "text_color_variable"
+  },
+  {
+    "type": "string",
+    "title": "Arrow Color",
+    "desc": "RGB values, in x, x, x format",
+    "section": "Settings",
+    "key": "arrow_color"
+  },
+  {
+    "type": "numeric",
+    "title": "Arrow Transparency",
+    "desc": "How dark the arrows get drawn, between 0-1",
+    "section": "Settings",
+    "key": "arrow_transparency"
+  },
+  {
+    "type": "string",
+    "title": "Comment Color",
+    "desc": "RGB values in x, x, x format",
+    "section": "Settings",
+    "key": "comment_color"
+  }
+]
+'''
+
+
+def get_angles(x, y):
+    angle = atan2(y, x)
+    angle1 = cos(angle + .3)
+    angle2 = sin(angle + .3)
+    angle3 = cos(angle - .3)
+    angle4 = sin(angle - .3)
+    return angle1, angle2, angle3, angle4
+
+def process_connections(inst1, inst2):
+    """
+    Takes in two instances and using their position properties determines what
+    points to use to draw a line between them along with an arrow
+
+    :param inst1:
+    :param inst2:
+    :return: List of points to draw a line through
+    """
+    x_change = inst2.center_x - inst1.center_x
+    y_change = inst2.center_y - inst1.center_y
+    if abs(x_change) > abs(y_change):
+        y1 = inst1.center_y
+        y2 = inst2.center_y
+        if x_change > 0:
+            x1 = inst1.right
+            x2 = inst2.x
+        else:
+            x1 = inst1.x
+            x2 = inst2.right
+    else:
+        x1 = inst1.center_x
+        x2 = inst2.center_x
+        if y_change > 0:
+            y1 = inst1.top
+            y2 = inst2.y
+        else:
+            y1 = inst1.y
+            y2 = inst2.top
+
+    #  calculating points to create arrow:
+    x0 = round(x2 - x1)
+    y0 = round(y2 - y1)
+    pcos, psin, ncos, nsin = get_angles(x0, y0)
+    ax = -10 * pcos + x2
+    ay = -10 * psin + y2
+    bx = -10 * ncos + x2
+    by = -10 * nsin + y2
+
+    return x1, y1, x2, y2, ax, ay, bx, by, x2, y2
+
 
 class SketchyMain(Screen):
     pass
 
+class SettingsScreen(Screen):
+    pass
 
 class SketchyGuide(Screen):
     pass
@@ -119,11 +221,14 @@ class EquationScatter(Scatter):
 
     def evaluation_completed_check(self, success):
         if success == 'comment':
-            self.equationlabel.color = (0, .8, 1)
+            self.equationlabel.color = \
+                translate_color_config(APP.config.get('Settings', 'comment_color'))
         elif success:
-            self.equationlabel.color = (1, 1, 1)
+            self.equationlabel.color = \
+                translate_color_config(APP.config.get('Settings', 'text_color_main'))
         elif not success:
-            self.equationlabel.color = (.5, .5, .5)
+            self.equationlabel.color = \
+                translate_color_config(APP.config.get('Settings', 'text_color_faded'))
 
     #  Run a dependency test as well as the binding callback
     def test_dependencies(self, internal=False, previous=None):
@@ -188,7 +293,7 @@ class EquationScatter(Scatter):
             self.equation_text = target.text
 
     #  Callback for update_dependencies
-    def update_text(self, target, value=None):
+    def update_text(self, target=None, value=None):
         self.text = self.evaluate(self.equation_text)
 
     def on_touch_down(self, touch):
@@ -257,8 +362,8 @@ class BlackBoard(FloatLayout):
 
     def __init__(self, **kwargs):
         super(BlackBoard, self).__init__(**kwargs)
+        self.update_call = False
 
-    #  For capturing middle mouse button
     def on_touch_down(self, touch, after=False):
         if self.collide_point(*touch.pos):
             if after:
@@ -274,6 +379,7 @@ class BlackBoard(FloatLayout):
                     if touch.button == 'scrolldown':
                         self.zoom(touch.pos, 1)
                     if touch.button == 'left':
+                        self.unbind_all_equations()
                         touch.grab(self)
                 return
             else:
@@ -287,14 +393,21 @@ class BlackBoard(FloatLayout):
             return
 
     def zoom(self, center_point, change):
+        change = 1 + change*0.1
         for equation in self.root.equations.values():
-            x = (equation.center_x - center_point[0]) * (1 + change * 0.1)
-            y = (equation.center_y - center_point[1]) * (1 + change * 0.1)
-            equation.center = (x + center_point[0], y + center_point[1])
-            f = (equation.equationlabel.font_size * (change*0.1))
-            equation.equationlabel.font_size += f
+            # x = (equation.center_x - center_point[0]) * (1 + change * 0.1)
+            # y = (equation.center_y - center_point[1]) * (1 + change * 0.1)
+            # equation.center = (x + center_point[0], y + center_point[1])
+            # f = (equation.equationlabel.font_size * (change*0.1))
+            equation.equationlabel.font_size *= change
+
+            equation.center_x = (equation.center_x - center_point[0])*change
+            equation.center_x += center_point[0]
+            equation.center_y = (equation.center_y - center_point[1])*change
+            equation.center_y += center_point[1]
 
     def drag_screen(self, dpos):
+        self.update_connections(None, None)
         for equation in self.root.equations.values():
             equation.x += dpos[0]
             equation.y += dpos[1]
@@ -303,6 +416,7 @@ class BlackBoard(FloatLayout):
     def on_touch_up(self, touch, after=False):
 
         if touch.grab_current is self:
+            self.bind_all_equations()
             touch.ungrab(self)
 
         #  If there is a previous_equation, and the previous equation is the current one
@@ -316,6 +430,22 @@ class BlackBoard(FloatLayout):
                 Clock.schedule_once(lambda dt: self.on_touch_up(touch, True))
         return super(BlackBoard, self).on_touch_up(touch)
 
+    # update_connections, unbind_all_equations, and bind_all_equations:
+    # used to reduce lag caused by a large number of updates to draw_connection
+    # from things such as dragging or zooming
+    def update_connections(self, value=None, target=None):
+        if not self.update_call:
+            Clock.schedule_once(self.draw_connections, .1)
+            self.update_call = True
+
+    def unbind_all_equations(self):
+        for inst in self.root.equations.values():
+            inst.unbind(x=self.update_connections)
+
+    def bind_all_equations(self):
+        for inst in self.root.equations.values():
+            inst.bind(x=self.update_connections)
+
     def draw_connections(self, *args):
         """
         If connections are found, call the draw_connection function with the arguments
@@ -324,53 +454,14 @@ class BlackBoard(FloatLayout):
         :param args:
         :return:
         """
+
         self.root.clear_connections()
         for inst in self.root.equations.values():
             for check in self.root.equations.values():
                 if inst != check:
                     if ':%s:' % inst.equation_id in check.equation_text:
-                        self.root.draw_connection(self.process_connections(inst, check))
-
-    def process_connections(self, inst1, inst2):
-        """
-        Takes in two instances and using their position properties determines what
-        points to use to draw a line between them along with an arrow
-
-        :param inst1:
-        :param inst2:
-        :return: List of points to draw a line through
-        """
-        x_change = inst2.center_x - inst1.center_x
-        y_change = inst2.center_y - inst1.center_y
-        if abs(x_change) > abs(y_change):
-            y1 = inst1.center_y
-            y2 = inst2.center_y
-            if x_change > 0:
-                x1 = inst1.right
-                x2 = inst2.x
-            else:
-                x1 = inst1.x
-                x2 = inst2.right
-        else:
-            x1 = inst1.center_x
-            x2 = inst2.center_x
-            if y_change > 0:
-                y1 = inst1.top
-                y2 = inst2.y
-            else:
-                y1 = inst1.y
-                y2 = inst2.top
-
-        #  calculating points to create arrow:
-        x0 = x2 - x1
-        y0 = y2 - y1
-        angle = atan2(y0, x0)
-        ax = -15 * cos(angle + .3) + x2
-        ay = -15 * sin(angle + .3) + y2
-        bx = -15 * cos(angle - .3) + x2
-        by = -15 * sin(angle - .3) + y2
-
-        return x1, y1, x2, y2, ax, ay, bx, by, x2, y2
+                        self.root.draw_connection(process_connections(inst, check))
+        self.update_call = False
 
 
 class SketchyMath(BoxLayout):
@@ -410,9 +501,6 @@ class SketchyMath(BoxLayout):
         self.add_widget(self.texteditorbox)
         self.add_widget(self.blackboard)
 
-        #  calls function to draw lines four times a second
-        Clock.schedule_interval(self.blackboard.draw_connections, 0.25)
-
     def new_equation(self, pos, **kwargs):
         """
         Create a new equation at pos (off-self slightly so it appears under the
@@ -436,6 +524,7 @@ class SketchyMath(BoxLayout):
 
         #  Bind new equation to EquationEditor
         eq.equation_bind()
+        eq.bind(x=self.blackboard.update_connections)
 
     def on_touch_down(self, touch):
         super(SketchyMath, self).on_touch_down(touch)
@@ -447,6 +536,9 @@ class SketchyMath(BoxLayout):
                         return
                 self.new_equation(touch.pos)
 
+    def bind_equation_to_draw_connections(self, target):
+        target.bind(x=self.blackboard.update_connections)
+
     def draw_connection(self, points, **kwargs):
         """
         Draws a line between two equations with an arrow.
@@ -454,8 +546,11 @@ class SketchyMath(BoxLayout):
         :param kwargs:
         :return:
         """
+        color = \
+            translate_color_config(APP.config.get('Settings', 'arrow_color'))
+        color.append(APP.config.get('Settings', 'arrow_transparency'))
         with self.canvas.after:
-            Color(0, 1, 0, .5)
+            Color(color[0], color[1], color[2], color[3])
             Line(points=[points], width=1.0)
 
     def clear_connections(self):
@@ -486,10 +581,49 @@ class SketchyMath(BoxLayout):
                 eq.equationlabel.font_size = save[3]
         for inst in self.equations.values():
             inst.update_text(target=None)
+            self.bind_equation_to_draw_connections(inst)
+
+class MySettingsWithTabbedPanel(SettingsWithTabbedPanel):
+    pass
+
+def translate_color_config(color_string: str):
+    x = color_string.split(',')
+    y = []
+    for i in range(len(x)):
+        y.append(float(x[i]))
+    return y
 
 
 class SketchyMathsApp(App):
 
     def build(self):
+        self.settings_cls = MySettingsWithTabbedPanel
+        global APP
+        APP = self
         return self.root
+
+    def build_config(self, config):
+        config.setdefaults('Settings',
+                           {
+                               'text_color_main': '1, 1, 1',
+                               'text_color_faded': '.5, .5, .5',
+                               'text_color_variable': '1, 0, 1',
+                               'arrow_color': '0, 1, 0',
+                               'arrow_transparency': .5,
+                               'comment_color': '0, .8, 1',
+                           })
+
+    def build_settings(self, settings):
+        settings.add_json_panel('Settings', self.config, data=json)
+
+    def on_config_change(self, config, section, key, value):
+        if section == 'Settings':
+            if key == 'text_color_main':
+                pass
+
+    def close_settings(self, settings=None, *largs):
+        super(SketchyMathsApp, self).close_settings(settings)
+        for equation in self.root.get_screen('main').sketchy_maths.equations.values():
+            equation.update_text()
+        self.root.get_screen('main').sketchy_maths.blackboard.update_connections()
 
