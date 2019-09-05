@@ -20,16 +20,18 @@ class SketchySave(Screen):
 
     def on_enter(self, *args):
         super(SketchySave, self).on_enter(*args)
-        self.savenametextinput.text = str(datetime.datetime.today())
+        if self.savenametextinput.text == '':
+            self.savenametextinput.text = str(datetime.datetime.today())
         self.callback_size_y(height=self.height)
         self.callback_size_x(width=self.width)
         self.previous_saves()
 
-
     def previous_saves(self):
-        self.paddingbox.text = 'Previous Saves:\n'
+        self.paddingbox.text = 'Recent Saves:\n'
         sketchybook = shelve.open('data/SketchyBook')
-        for save in sketchybook:
+        keys_list = [x for x in sketchybook.keys()]
+        keys_list.reverse()
+        for save in keys_list:
             self.paddingbox.text += '\n'
             self.paddingbox.text += "{save}".format(save=save)
         sketchybook.close()
@@ -52,7 +54,7 @@ class SketchySave(Screen):
         self.labelsavestatus.color = (0, 1, 0, 1)
 
         self.savenametextinput = TextInput()
-        self.savenametextinput.text = str(datetime.datetime.today())
+        self.savenametextinput.text = ''
 
         self.paddingbox = Label()
         self.paddingbox.valign = 'top'
@@ -117,8 +119,10 @@ class SketchySave(Screen):
 
         self.labelsavestatus.text = self.savenametextinput.text + '\nSaved!'
         self.labelsavestatus.text += '\n' + str(datetime.datetime.now())
+        self.labelsavestatus.color = (0, 1, 0, 1)
         self.previous_saves()
 
     def callback_returnbutton(self, target):
         #  Return to 'main' window
         self.parent.current = 'main'
+        self.labelsavestatus.color = (1, 1, 1, 1)
