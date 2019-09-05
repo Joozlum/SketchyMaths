@@ -26,8 +26,6 @@ returns an error, it won't run and crash the program.  Infinite loops, however, 
 work as expected, causing the program to hang indefinitely.  If your method requires a loop,
 just ensure that it has a well defined exit parameter.
 """
-
-
 def percent(value):
     """
     Take a percent value and return it in decimal form.
@@ -38,11 +36,11 @@ def percent(value):
 
 
 """
-Now that we have a function, we add it to the junk_dict.  The junk_dict is just a dictionary
-of key pairs that tell the code what to call if certain text appears in the evaluate function.
-Whatever you set the key to is what you will have to type into the equation.
+Now that we have a function, we add it to the sketchy_dict.  The sketchy_dict is just 
+a dictionary of key pairs that tell the code what to call if certain text appears in the 
+evaluate function. Whatever you set the key to is what you will have to type into the 
+equation.
  """
-
 sketchy_dict['percent'] = percent  # add function call without parenthesis for dictionary.
 
 """ 

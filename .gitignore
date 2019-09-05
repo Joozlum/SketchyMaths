@@ -1,3 +1,8 @@
+# Local Save Files
+data/SketchyBook.bak
+data/SketchyBook.dat
+data/SketchyBook.dir
+
 # Vim
 *.swp
 *.swo

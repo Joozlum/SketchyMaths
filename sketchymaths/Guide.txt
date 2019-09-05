@@ -2,17 +2,22 @@
 -Double-Click or Double-Tap:
 Creates new Equation
 
+To deleted an equation, click on it and clear its equation text ('empty' will be displayed).
+Then when you click on a different equation, or create a new one, the 'empty' one will be deleted.
+
 -Left Click on a different Equation:
 Switch focus of text inputs to different Equation
 
 -Left Click on Equation already in focus:
-Switch keyboard focus between Equation Text and Equation Name and selects all text in new focus
+Focuses keyboard to Equation Text Editor and selects all text
 
 -Left Click and drag outside of an Equation:
 Allows you to drag the entire screen, moving all Equations at once relative to the point grabbed.
 
 -Middle Mouse Button:
-Insert :name: of Equation clicked on (unless clicking on self) into text input.
+Replaces selected text or inserts if no text is selected :name: of Equation clicked on (unless clicking on self) into text input.
+
+-Pressing 'enter' while the Equation Text Editor is in focus will cycle through selecting references, if any are present.
 
 -Scroll Wheel over an Equation:
 This will increase or decrease the font size of the Equation
@@ -33,12 +38,13 @@ These references will also be displayed by a line showing the path of the refere
 -Equations that are successfully evaluated will be white, while equations that could not be evaluated will appear grey.
 
 -If you type '#' anywhere in the equation text it will skip evaluation and become a comment, and the text will appear light blue.
+-comments will also be skipped over for creating arrows, so equation names can be used in them without creating clutter.
 
 -Since colons ':' are used to find references, you cannot have them in your equation names.
 If you try they will be replaced with semi-colons.
 
 -If you decide to manually enter in a self reference to an equation it will display (Self) to remind you that you tried to start an infinite loop.
-(There is also a DEPTH_LIMIT of 30, so if you make strange references that end up in a loop it should be okay, though you won't get a solution)
+(There is also a DEPTH_LIMIT of 50, so if you make strange references that end up in a loop it should be okay, though you won't get a solution)
 
 The two text inputs at the top of the screen edit the equation and its name.
     -Whatever equation you last clicked appears in the TextInput where you can edit it.
@@ -51,9 +57,6 @@ Each equation is created with a generic id 'x0' that can be changed by typing in
     -Middle clicking on another equation will automatically insert the equation's name into the text input.
 
 Equations are updated as you type, and any equations referencing the one you are currently editing will also update.
-
-To deleted an equation, click on it and clear its text ('empty' will be displayed).
-Then when you click on a different equation, or create a new one, the 'empty' one will be deleted.
 
 Equations can be dragged around and rearranged on the screen.
 

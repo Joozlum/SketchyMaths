@@ -30,7 +30,7 @@ Bitwise Operators for integers
 '>>': shift right by n bits
 '~': invert bits
 
-Functions
+Math Functions
 'acos': acos
 'asin': asin
 'atan': atan
@@ -59,3 +59,4 @@ Functions
 'tan': tan
 'tanh': tanh
 'percent': divide by 100
+'sum': adds together all values in a list e.g. sum([1, 1])
