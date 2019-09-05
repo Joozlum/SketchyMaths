@@ -16,11 +16,14 @@ from kivy.properties import ObjectProperty, StringProperty, DictProperty
 from sketchymaths import sketchymathmethods, sketchyload, sketchysave
 from kivy.uix.settings import SettingsWithTabbedPanel
 
+#  For debugging
+# from sketchymaths.debuggingfuntimes import SketchCollection
+
 #  Disable multitouch
 from kivy.config import Config
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
-DEPTH_LIMIT = 30
+DEPTH_LIMIT = 50
 
 #  Text for the settings menu
 json = '''
@@ -70,7 +73,8 @@ json = '''
 ]
 '''
 
-
+#  todo
+#   update math for drawing these connections
 def get_angles(x, y):
     angle = atan2(y, x)
     angle1 = cos(angle + .3)
@@ -124,8 +128,6 @@ def process_connections(inst1, inst2):
 class SketchyMain(Screen):
     pass
 
-class SettingsScreen(Screen):
-    pass
 
 class SketchyGuide(Screen):
     pass
@@ -145,6 +147,15 @@ class GenericLabel(Label):
 
 class EquationEditor(TextInput):
     root = ObjectProperty(None)
+
+    def __init__(self, **kwargs):
+        super(EquationEditor, self).__init__(**kwargs)
+        self.write_tab = False
+        self.bind(focus=self.on_focus)
+
+    def on_focus(self, instance, value, *largs):
+        if value:
+            Clock.schedule_once(lambda x: self.select_all())
 
 
 class EquationLabel(Label):
@@ -246,19 +257,20 @@ class EquationScatter(Scatter):
     #  Used on_touch_up to select all text in equation_editor
     #  or all text in equation name editor and set keyboard focus
     def text_editor_focus_control(self, target=None, value=None):
-        if self.focused_text == 'equation_name_editor':
+        # if self.focused_text == 'equation_name_editor':
+        #     self.root.equation_editor.focus = True
+        #     self.root.equation_editor.select_all()
+        #     self.focused_text = 'equation_editor'
+        #     return
+        # if self.focused_text == 'equation_editor':
+        #     self.root.equation_name_editor.focus = True
+        #     self.root.equation_name_editor.select_all()
+        #     self.focused_text = 'equation_name_editor'
+        #     return
+        if not self.root.equation_editor.focus:
             self.root.equation_editor.focus = True
             self.root.equation_editor.select_all()
-            self.focused_text = 'equation_editor'
-            return
-        if self.focused_text == 'equation_editor':
-            self.root.equation_name_editor.focus = True
-            self.root.equation_name_editor.select_all()
-            self.focused_text = 'equation_name_editor'
-            return
-        self.root.equation_editor.focus = True
-        self.root.equation_editor.select_all()
-        self.focused_text = 'equation_editor'
+        #     self.focused_text = 'equation_editor'
 
     #  Bind EquationEditor to callback text_focus
     def equation_bind(self):
@@ -304,6 +316,7 @@ class EquationScatter(Scatter):
                 self.test_dependencies()
             elif touch.button == 'middle':
                 if self != self.root.previous_equation:
+                    self.root.equation_editor.delete_selection()
                     self.root.equation_editor.insert_text(':{id}:'.format(id=self.equation_id))
             elif touch.button == 'scrollup' or touch.button == 'scrolldown':
                 self.text_size_change(self, touch.button)
@@ -412,7 +425,6 @@ class BlackBoard(FloatLayout):
             equation.x += dpos[0]
             equation.y += dpos[1]
 
-    #  Switches focus to EquationEditor or to IDEditor for smoother use
     def on_touch_up(self, touch, after=False):
 
         if touch.grab_current is self:
@@ -457,7 +469,11 @@ class BlackBoard(FloatLayout):
 
         self.root.clear_connections()
         for inst in self.root.equations.values():
+            if '#' in inst.equation_text:
+                continue
             for check in self.root.equations.values():
+                if '#' in check.equation_text:
+                    continue
                 if inst != check:
                     if ':%s:' % inst.equation_id in check.equation_text:
                         self.root.draw_connection(process_connections(inst, check))
