@@ -1,8 +1,6 @@
 import pickle
 import shelve
 
-from kivy.app import App
-from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.screenmanager import Screen
@@ -42,10 +40,17 @@ class SketchyBox(BoxLayout):
         self.bottombox.orientation = 'horizontal'
         self.bottombox.size_hint_y = 0.1
 
+        self.bottombox.load_examples_button = Button()
+        self.bottombox.load_examples_button.text = 'Load Examples'
+        self.bottombox.load_examples_button.bind(on_press=self.examples_load)
+        self.bottombox.load_examples_button.size_hint_x = .25
+
         self.bottombox.b1 = Button()
         self.bottombox.b1.text = 'Close'
         self.bottombox.b1.bind(on_press=self.close_load)
+        self.bottombox.b1.size_hint_x = .75
 
+        self.bottombox.add_widget(self.bottombox.load_examples_button)
         self.bottombox.add_widget(self.bottombox.b1)
         self.add_widget(self.scrollview)
         self.add_widget(self.bottombox)
@@ -61,9 +66,12 @@ class SketchyBox(BoxLayout):
 
         self.parent.parent.current = 'main'
 
-    def open_load(self):
+    def open_load(self, loading_examples=False):
         if not self.isopen:
-            self.sketchybook = shelve.open('data/SketchyBook')
+            if loading_examples:
+                self.sketchybook = shelve.open('data/SketchyExamples')
+            else:
+                self.sketchybook = shelve.open('data/SketchyBook')
             for save in self.sketchybook:
                 save_line = BoxLayout(size_hint_y=None, height=40)
                 load_button = Button(text=save, size_hint_x=.9)
@@ -76,6 +84,13 @@ class SketchyBox(BoxLayout):
                 load_button.bind(on_press=self.close_load)
                 delete_button.bind(on_release=self.delete_save)
             self.isopen = True
+
+    def examples_load(self, target):
+        if self.isopen:
+            self.sketchybook.close()
+            self.isopen = False
+            self.topbox.clear_widgets()
+            self.open_load(True)
 
     def delete_save(self, target):
         del self.sketchybook[target.save]

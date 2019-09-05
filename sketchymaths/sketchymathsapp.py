@@ -75,6 +75,8 @@ json = '''
 
 #  todo
 #   update math for drawing these connections
+#  Kivy has vector math options, which includes intersection and rotation, which could be used to clean up
+#  how these connections get drawn.
 def get_angles(x, y):
     angle = atan2(y, x)
     angle1 = cos(angle + .3)
@@ -152,6 +154,37 @@ class EquationEditor(TextInput):
         super(EquationEditor, self).__init__(**kwargs)
         self.write_tab = False
         self.bind(focus=self.on_focus)
+
+    def keyboard_on_key_down(self, window, keycode, text, modifiers):
+        if self.focus:
+            if self.__name__ == 'eq_text':
+                if self.text_selection(keycode):
+                    return True
+        super(EquationEditor, self).keyboard_on_key_down(window, keycode, text, modifiers)
+
+    def text_selection(self, keycode):
+        if 'enter' in keycode:
+            cursor_start = self.cursor_index()
+            if ':' in self.text:
+                i = [self.text.find(':')]
+                while i[-1] != -1:
+                    i.append(self.text.find(':', i[-1]+1))
+                i_zip = [[x, y] for x,y in zip([i[0::2]], [i[1::2]])]
+                for x,y in i_zip:
+                    for xx,yy in zip(x,y):
+                        if cursor_start <= xx and yy != -1:
+                            while self.cursor_index() < yy:
+                                self.do_cursor_movement('cursor_right')
+                            self.cancel_selection()
+                            self.select_text(xx, yy+1)
+                            return True
+                if self.cursor_index() == 0:
+                    return True
+                else:
+                    self.do_cursor_movement('cursor_home')
+                    self.text_selection('enter')
+            return True
+        return False
 
     def on_focus(self, instance, value, *largs):
         if value:
@@ -311,6 +344,8 @@ class EquationScatter(Scatter):
     def on_touch_down(self, touch):
         super(EquationScatter, self).on_touch_down(touch)
         if self.collide_point(*touch.pos):
+            if self.root.equation_editor.collide_point(*touch.pos):
+                return False
             if touch.button == 'left':
                 self.equation_bind()
                 self.test_dependencies()
@@ -503,19 +538,21 @@ class SketchyMath(BoxLayout):
         self.equation_name_editor.root = self
         self.equation_name_editor.text = ''
         self.equation_name_editor.size_hint_x = .25
+        self.equation_name_editor.__name__ = 'eq_name'
 
         self.equation_editor = EquationEditor(root=self)
         self.equation_editor.size_hint_x = .75
+        self.equation_editor.__name__ = 'eq_text'
 
         self.blackboard = BlackBoard(size=self.size, root=self)
 
         self.texteditorbox.add_widget(self.equation_name_label)
         self.texteditorbox.add_widget(self.equation_text_label)
-        self.texteditorbox.add_widget(self.equation_name_editor)
-        self.texteditorbox.add_widget(self.equation_editor)
+        self.texteditorbox.add_widget(self.equation_name_editor,)
+        self.texteditorbox.add_widget(self.equation_editor, 0)
 
         self.add_widget(self.texteditorbox)
-        self.add_widget(self.blackboard)
+        self.add_widget(self.blackboard, canvas='before')
 
     def new_equation(self, pos, **kwargs):
         """

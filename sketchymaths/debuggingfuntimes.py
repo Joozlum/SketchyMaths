@@ -2,6 +2,18 @@
 Custom code for debugging and logging information about how the program runs
 """
 import time
+import shelve
+import pickle
+
+# Code to clone SketchyBook into SketchyExamples
+#   Decided to separated the books so that updating or pulling a branch down doesn't clear the user's book
+# book = shelve.open('../data/SketchyBook')
+# book_copy = shelve.open('../data/SketchyExamples')
+# for key in book.keys():
+#     book_copy[key] = book[key]
+#
+# book.close()
+# book_copy.close()
 
 #  decorator that works for (most) class functions to give log data on
 #  these can be added by putting @SketchCollection('label') before a function
