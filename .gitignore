@@ -3,6 +3,12 @@ data/SketchyBook.bak
 data/SketchyBook.dat
 data/SketchyBook.dir
 
+# Settings .ini file
+sketchymaths/sketchymaths.ini
+
+# Scratch Files
+sketchymaths/streamofnotes.txt
+
 # Vim
 *.swp
 *.swo

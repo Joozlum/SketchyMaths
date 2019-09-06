@@ -1,6 +1,0 @@
-file = open('sketchymaths\Guide.txt', 'r')
-guide_text = file.read()
-file.close()
-file = open('sketchymaths\Methods.txt', 'r')
-methods_text = file.read()
-file.close()

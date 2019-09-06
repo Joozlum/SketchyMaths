@@ -1,7 +1,6 @@
 from math import atan2, cos, sin
 from kivy.app import App
 from kivy.clock import Clock
-from kivy.lang import Builder
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.vertex_instructions import Line
 from kivy.uix.behaviors import FocusBehavior
@@ -13,119 +12,23 @@ from kivy.uix.scatter import Scatter
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.textinput import TextInput
 from kivy.properties import ObjectProperty, StringProperty, DictProperty
-from sketchymaths import sketchymathmethods, sketchyload, sketchysave
+from sketchymaths import sketchymathmethods
 from kivy.uix.settings import SettingsWithTabbedPanel
 
+#  Import internal code from internalsketch
+from internalsketch.sketchysettings import settings_json, settings_defaults
+from internalsketch.sketchyload import SketchyLoad
+from internalsketch.sketchysave import SketchySave
+import sketchymaths.internalsketch.sketchystatic as ss
+
 #  For debugging
-# from sketchymaths.debuggingfuntimes import SketchCollection
+# from sketchymaths.internalsketch.debuggingfuntimes import SketchCollection
 
 #  Disable multitouch
 from kivy.config import Config
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
 DEPTH_LIMIT = 50
-
-#  Text for the settings menu
-json = '''
-[
-  {
-    "type": "string",
-    "title": "Evaluated Text Color",
-    "desc": "RGB values, in x, x, x format",
-    "section": "Settings",
-    "key": "text_color_main"
-  },
-  {
-    "type": "string",
-    "title": "Unevaluated Text Color",
-    "desc": "RGB values, in x, x, x format",
-    "section": "Settings",
-    "key": "text_color_faded"
-  },
-  {
-    "type": "string",
-    "title": "Variable Text Color",
-    "desc": "RGB values, in x, x, x format",
-    "section": "Settings",
-    "key": "text_color_variable"
-  },
-  {
-    "type": "string",
-    "title": "Arrow Color",
-    "desc": "RGB values, in x, x, x format",
-    "section": "Settings",
-    "key": "arrow_color"
-  },
-  {
-    "type": "numeric",
-    "title": "Arrow Transparency",
-    "desc": "How dark the arrows get drawn, between 0-1",
-    "section": "Settings",
-    "key": "arrow_transparency"
-  },
-  {
-    "type": "string",
-    "title": "Comment Color",
-    "desc": "RGB values in x, x, x format",
-    "section": "Settings",
-    "key": "comment_color"
-  }
-]
-'''
-
-#  todo
-#   update math for drawing these connections
-#  Kivy has vector math options, which includes intersection and rotation, which could be used to clean up
-#  how these connections get drawn.
-def get_angles(x, y):
-    angle = atan2(y, x)
-    angle1 = cos(angle + .3)
-    angle2 = sin(angle + .3)
-    angle3 = cos(angle - .3)
-    angle4 = sin(angle - .3)
-    return angle1, angle2, angle3, angle4
-
-def process_connections(inst1, inst2):
-    """
-    Takes in two instances and using their position properties determines what
-    points to use to draw a line between them along with an arrow
-
-    :param inst1:
-    :param inst2:
-    :return: List of points to draw a line through
-    """
-    x_change = inst2.center_x - inst1.center_x
-    y_change = inst2.center_y - inst1.center_y
-    if abs(x_change) > abs(y_change):
-        y1 = inst1.center_y
-        y2 = inst2.center_y
-        if x_change > 0:
-            x1 = inst1.right
-            x2 = inst2.x
-        else:
-            x1 = inst1.x
-            x2 = inst2.right
-    else:
-        x1 = inst1.center_x
-        x2 = inst2.center_x
-        if y_change > 0:
-            y1 = inst1.top
-            y2 = inst2.y
-        else:
-            y1 = inst1.y
-            y2 = inst2.top
-
-    #  calculating points to create arrow:
-    x0 = round(x2 - x1)
-    y0 = round(y2 - y1)
-    pcos, psin, ncos, nsin = get_angles(x0, y0)
-    ax = -10 * pcos + x2
-    ay = -10 * psin + y2
-    bx = -10 * ncos + x2
-    by = -10 * nsin + y2
-
-    return x1, y1, x2, y2, ax, ay, bx, by, x2, y2
-
 
 class SketchyMain(Screen):
     pass
@@ -211,23 +114,29 @@ class EquationScatter(Scatter):
         # self.add_widget(self.equation_display)
         # self.bind(equation_text=self.equation_display.setter('text'))
 
-    def evaluate(self, equation, origin=None, internal=False, depth_limit=0):
+    def evaluate(self, equation, origin=None, internal=False, depth_counter=0):
         """
         Evaluate equation while replacing references with their target.
         Includes error checking to prevent self referencing.
         If any references reference this equation '(Self)' will be
         displayed.
 
+        If a reference to itself is buried, or it references an equation that already has an unresolved
+        infinite loop, the depth_counter will reach the depth_limit,
+        and the sources of that limit will change color.
+
         origin is the original equation when evaluate calls itself
         internal is set to True when evaluate is called inside of itself
 
-        :param depth_limit:
+        :param depth_counter:
         :param equation: str
         :param origin: object
         :param internal: boolean
         :return:
         """
-        if depth_limit > DEPTH_LIMIT:
+        depth_limit = int(APP.config.get('Settings', 'depth_limit'))
+        if depth_counter > depth_limit:
+            self.evaluation_completed_check('DEPTH_LIMIT')
             return '*DEPTH_LIMIT*'
         if '#' in equation:
             self.evaluation_completed_check('comment')
@@ -244,7 +153,7 @@ class EquationScatter(Scatter):
                     equation = equation.replace(":%s:" % key,
                                                 "(%s)" % self.root.equations[key].evaluate(
                                                     self.root.equations[key].equation_text, internal=True,
-                                                    origin=origin, depth_limit=depth_limit+1))
+                                                    origin=origin, depth_counter=depth_counter + 1))
                 else:
                     equation = equation.replace(":%s:" % key, "(Self)")
         #  evaluate the equation
@@ -267,6 +176,9 @@ class EquationScatter(Scatter):
         if success == 'comment':
             self.equationlabel.color = \
                 translate_color_config(APP.config.get('Settings', 'comment_color'))
+        elif success == 'DEPTH_LIMIT':
+            self.equationlabel.color = \
+                translate_color_config(APP.config.get('Settings', 'depth_limit_color'))
         elif success:
             self.equationlabel.color = \
                 translate_color_config(APP.config.get('Settings', 'text_color_main'))
@@ -443,10 +355,6 @@ class BlackBoard(FloatLayout):
     def zoom(self, center_point, change):
         change = 1 + change*0.1
         for equation in self.root.equations.values():
-            # x = (equation.center_x - center_point[0]) * (1 + change * 0.1)
-            # y = (equation.center_y - center_point[1]) * (1 + change * 0.1)
-            # equation.center = (x + center_point[0], y + center_point[1])
-            # f = (equation.equationlabel.font_size * (change*0.1))
             equation.equationlabel.font_size *= change
 
             equation.center_x = (equation.center_x - center_point[0])*change
@@ -511,7 +419,7 @@ class BlackBoard(FloatLayout):
                     continue
                 if inst != check:
                     if ':%s:' % inst.equation_id in check.equation_text:
-                        self.root.draw_connection(process_connections(inst, check))
+                        self.root.draw_connection(ss.process_connections(inst, check))
         self.update_call = False
 
 
@@ -655,19 +563,12 @@ class SketchyMathsApp(App):
         APP = self
         return self.root
 
+    #  Settings data is imported as settings_json and settings_default from sketchysettings.py
     def build_config(self, config):
-        config.setdefaults('Settings',
-                           {
-                               'text_color_main': '1, 1, 1',
-                               'text_color_faded': '.5, .5, .5',
-                               'text_color_variable': '1, 0, 1',
-                               'arrow_color': '0, 1, 0',
-                               'arrow_transparency': .5,
-                               'comment_color': '0, .8, 1',
-                           })
+        config.setdefaults('Settings', settings_defaults)
 
     def build_settings(self, settings):
-        settings.add_json_panel('Settings', self.config, data=json)
+        settings.add_json_panel('Settings', self.config, data=settings_json)
 
     def on_config_change(self, config, section, key, value):
         if section == 'Settings':
