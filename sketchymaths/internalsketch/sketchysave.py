@@ -2,18 +2,22 @@ import datetime
 import pickle
 import shelve
 
-from kivy.app import App
-from kivy.uix.label import Label
-from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
+from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
-from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
 
 
 class labelsavename(Label):
-    pass
+    def __init__(self, **kwargs):
+        super(labelsavename, self).__init__(**kwargs)
+        self.valign = 'bottom'
+        self.padding = (20, 20)
+        self.bind(size=self.generic_callback)
+
+    def generic_callback(self, target, value):
+        self.text_size = value
 
 
 class SketchySave(Screen):
@@ -38,6 +42,8 @@ class SketchySave(Screen):
 
     def __init__(self, **kwargs):
         super(SketchySave, self).__init__(**kwargs)
+        self.previous_auto_save = None
+
         self.saveboxlayout = BoxLayout()
         self.saveboxlayout.orientation = 'vertical'
 
@@ -98,7 +104,7 @@ class SketchySave(Screen):
 
 
     def get_equation_dictionary(self):
-        equation_dictionary = self.parent.save_data()
+        equation_dictionary = self.main.save_data()
         data = []
         for inst in equation_dictionary.values():
             x = (inst.equation_id, inst.pos, inst.equation_text, inst.equationlabel.font_size)
@@ -112,6 +118,26 @@ class SketchySave(Screen):
         """
         sketchybook = shelve.open('data/SketchyBook')
         sketchybook[self.savenametextinput.text] = pickle.dumps(data)
+        sketchybook.close()
+
+    def auto_save(self):
+        name = str(datetime.datetime.today())
+        data = self.get_equation_dictionary()
+        if not data:
+            return False
+        elif data == self.previous_auto_save:
+            return False
+
+        self.previous_auto_save = data
+        sketchybook = shelve.open('data/AutoSaves')
+        save_list = [x for x in sketchybook.keys()]
+        remaining_saves = len(save_list) - int(self.main.app.config.get('Settings', 'auto_save_number'))
+        if remaining_saves > 0:
+            save_list.sort()
+            for x in range(remaining_saves):
+                if save_list[x] in sketchybook.keys():
+                    del sketchybook[save_list[x]]
+        sketchybook[name] = pickle.dumps(data)
         sketchybook.close()
 
     def callback_savebutton(self, target):

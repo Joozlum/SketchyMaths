@@ -1,53 +1,131 @@
-from math import atan2, cos, sin
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.vertex_instructions import Line
 from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.scatter import Scatter
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
 from kivy.properties import ObjectProperty, StringProperty, DictProperty
 from sketchymaths import sketchymathmethods
 from kivy.uix.settings import SettingsWithTabbedPanel
 
 #  Import internal code from internalsketch
-from internalsketch.sketchysettings import settings_json, settings_defaults
-from internalsketch.sketchyload import SketchyLoad
-from internalsketch.sketchysave import SketchySave
+from sketchymaths.internalsketch.sketchysettings import settings_json, settings_defaults
+from sketchymaths.internalsketch.sketchyload import SketchyLoad
+from sketchymaths.internalsketch.sketchysave import SketchySave
+from sketchymaths.internalsketch.sketchyguide import SketchyGuide
 import sketchymaths.internalsketch.sketchystatic as ss
 
 #  For debugging
 # from sketchymaths.internalsketch.debuggingfuntimes import SketchCollection
 
-#  Disable multitouch
-from kivy.config import Config
-Config.set('input', 'mouse', 'mouse,disable_multitouch')
-
-DEPTH_LIMIT = 50
+class MenuButton(Button):
+    def __init__(self, **kwargs):
+        super(MenuButton, self).__init__(**kwargs)
+        self.font_size = 20
 
 class SketchyMain(Screen):
-    pass
+    def __init__(self, **kwargs):
+        super(SketchyMain, self).__init__(**kwargs)
+        self.box1 = BoxLayout()
+        self.box1.orientation = 'vertical'
+        self.maths = SketchyMath(main=self)
+        self.maths.name = 'maths'
+        self.buttons_box = BoxLayout()
+        self.buttons_box.orientation = 'horizontal'
+        self.bind(height=self.height_callback)
 
+        self.guide_button = MenuButton()
+        self.guide_button.text = 'Guide'
+        self.save_button = MenuButton()
+        self.save_button.text = 'Save'
+        self.load_button = MenuButton()
+        self.load_button.text = 'Load'
+        self.clear_button = MenuButton()
+        self.clear_button.text = 'Clear'
+        self.quit_button = MenuButton()
+        self.quit_button.text = 'Quit'
 
-class SketchyGuide(Screen):
-    pass
+        self.buttons_box.add_widget(self.guide_button)
+        self.buttons_box.add_widget(self.save_button)
+        self.buttons_box.add_widget(self.load_button)
+        self.buttons_box.add_widget(self.clear_button)
+        self.buttons_box.add_widget(self.quit_button)
+
+        self.box1.add_widget(self.maths)
+        self.box1.add_widget(self.buttons_box)
+
+        self.add_widget(self.box1)
+
+        self.guide_button.bind(on_press=self.menu_button_callback)
+        self.save_button.bind(on_press=self.menu_button_callback)
+        self.load_button.bind(on_press=self.menu_button_callback)
+        self.clear_button.bind(on_press=self.menu_button_callback)
+        self.quit_button.bind(on_press=self.menu_button_callback)
+
+    def menu_button_callback(self, target):
+        if target.text == 'Guide':
+            self.screenmanager.current = 'guide'
+        elif target.text == 'Save':
+            self.screenmanager.current = 'save'
+        elif target.text == 'Load':
+            self.screenmanager.current = 'load'
+        elif target.text == 'Clear':
+            self.maths.load_function(data=None)
+        elif target.text == 'Quit':
+            self.screenmanager.save.auto_save()
+            self.screenmanager.app.stop()
+
+    def height_callback(self, target, value):
+        self.buttons_box.size_hint_y = 25 / value
 
 
 class SketchyScreens(ScreenManager):
+    def __init__(self, **kwargs):
+        super(SketchyScreens, self).__init__(**kwargs)
+        self.main = SketchyMain()
+        self.main.name = 'main'
+        self.guide = SketchyGuide()
+        self.guide.name = 'guide'
+        self.load = SketchyLoad()
+        self.load.name = 'load'
+        self.save = SketchySave()
+        self.save.main = self
+        self.save.name = 'save'
+
+        self.main.screenmanager = self
+        self.guide.screenmanager = self
+        self.load.screenmanager = self
+        self.save.screenmanager = self
+
+        self.add_widget(self.main)
+        self.add_widget(self.guide)
+        self.add_widget(self.load)
+        self.add_widget(self.save)
+
     def load_data(self, data):
-        self.get_screen('main').children[0].children[1].load_function(data)
+        self.main.maths.load_function(data)
 
     def save_data(self):
-        return self.get_screen('main').children[0].children[1].equations
+        return self.main.maths.equations
 
 
 class GenericLabel(Label):
-    pass
+    def __init__(self, **kwargs):
+        super(GenericLabel, self).__init__(**kwargs)
+        self.font_size = 18
+        self.padding_x = 20
+        self.bind(size=self.generic_callback)
+
+    def generic_callback(self, target, value):
+        self.text_size = value
 
 
 class EquationEditor(TextInput):
@@ -57,6 +135,10 @@ class EquationEditor(TextInput):
         super(EquationEditor, self).__init__(**kwargs)
         self.write_tab = False
         self.bind(focus=self.on_focus)
+        self.height = 40
+        self.font_size = 20
+        self.size_hint_y = None
+        self.multiline = False
 
     def keyboard_on_key_down(self, window, keycode, text, modifiers):
         if self.focus:
@@ -110,9 +192,27 @@ class EquationScatter(Scatter):
     def __init__(self, **kwargs):
         super(EquationScatter, self).__init__(**kwargs)
         self.fbind('equation_text', self.update_text)
+        self.size_hint = (None, None)
+        self.equationlabel = EquationLabel()
+        self.equationlabel.markup = True
+        self.equationlabel.font_size = 20
+        self.equationlabel.text = 'Type in some maths!'
+        self.add_widget(self.equationlabel)
+        self.bind(text=self.label_text_callback)
+        self.equationlabel.bind(texture_size=self.label_size_callback)
+        self.equationlabel.bind(size=self.scatter_size_callback)
         # self.equation_display = Label(font_size=12, color=[1, 0, 0, 1], height=-15)
         # self.add_widget(self.equation_display)
         # self.bind(equation_text=self.equation_display.setter('text'))
+
+    def label_text_callback(self, target, value):
+        self.equationlabel.text = value
+
+    def label_size_callback(self, target, value):
+        self.equationlabel.size = value
+
+    def scatter_size_callback(self, target, value):
+        self.size = value
 
     def evaluate(self, equation, origin=None, internal=False, depth_counter=0):
         """
@@ -134,7 +234,7 @@ class EquationScatter(Scatter):
         :param internal: boolean
         :return:
         """
-        depth_limit = int(APP.config.get('Settings', 'depth_limit'))
+        depth_limit = int(self.app.config.get('Settings', 'depth_limit'))
         if depth_counter > depth_limit:
             self.evaluation_completed_check('DEPTH_LIMIT')
             return '*DEPTH_LIMIT*'
@@ -175,16 +275,16 @@ class EquationScatter(Scatter):
     def evaluation_completed_check(self, success):
         if success == 'comment':
             self.equationlabel.color = \
-                translate_color_config(APP.config.get('Settings', 'comment_color'))
+                translate_color_config(self.app.config.get('Settings', 'comment_color'))
         elif success == 'DEPTH_LIMIT':
             self.equationlabel.color = \
-                translate_color_config(APP.config.get('Settings', 'depth_limit_color'))
+                translate_color_config(self.app.config.get('Settings', 'depth_limit_color'))
         elif success:
             self.equationlabel.color = \
-                translate_color_config(APP.config.get('Settings', 'text_color_main'))
+                translate_color_config(self.app.config.get('Settings', 'text_color_main'))
         elif not success:
             self.equationlabel.color = \
-                translate_color_config(APP.config.get('Settings', 'text_color_faded'))
+                translate_color_config(self.app.config.get('Settings', 'text_color_faded'))
 
     #  Run a dependency test as well as the binding callback
     def test_dependencies(self, internal=False, previous=None):
@@ -427,8 +527,10 @@ class SketchyMath(BoxLayout):
     previous_equation = ObjectProperty(None)
     equations = DictProperty()
 
-    def __init__(self, **kwargs):
+    def __init__(self, main, **kwargs):
         super(SketchyMath, self).__init__(**kwargs)
+        self.orientation = 'vertical'
+        self.main = main
 
         self.texteditorbox = GridLayout(cols=2)
         self.texteditorbox.size_hint_y = None
@@ -446,7 +548,6 @@ class SketchyMath(BoxLayout):
         self.equation_name_editor.root = self
         self.equation_name_editor.text = ''
         self.equation_name_editor.size_hint_x = .25
-        self.equation_name_editor.__name__ = 'eq_name'
 
         self.equation_editor = EquationEditor(root=self)
         self.equation_editor.size_hint_x = .75
@@ -462,6 +563,9 @@ class SketchyMath(BoxLayout):
         self.add_widget(self.texteditorbox)
         self.add_widget(self.blackboard, canvas='before')
 
+    def auto_save_callback(self, *args):
+        self.main.screenmanager.save.auto_save()
+
     def new_equation(self, pos, **kwargs):
         """
         Create a new equation at pos (off-self slightly so it appears under the
@@ -473,6 +577,7 @@ class SketchyMath(BoxLayout):
         """
         eq = EquationScatter(pos=(pos[0] - 20, pos[1] - 10),
                              root=self)
+        eq.app = self.main.screenmanager.app
         i = 0
         ii = 'x' + str(i)
         while ii in self.equations:
@@ -508,8 +613,8 @@ class SketchyMath(BoxLayout):
         :return:
         """
         color = \
-            translate_color_config(APP.config.get('Settings', 'arrow_color'))
-        color.append(APP.config.get('Settings', 'arrow_transparency'))
+            translate_color_config(self.main.screenmanager.app.config.get('Settings', 'arrow_color'))
+        color.append(self.main.screenmanager.app.config.get('Settings', 'arrow_transparency'))
         with self.canvas.after:
             Color(color[0], color[1], color[2], color[3])
             Line(points=[points], width=1.0)
@@ -533,6 +638,7 @@ class SketchyMath(BoxLayout):
         if data is not None:
             for save in data:
                 eq = EquationScatter()
+                eq.app = self.main.screenmanager.app
                 eq.pos = save[1]
                 eq.equation_id = str(save[0])
                 eq.root = self
@@ -543,6 +649,7 @@ class SketchyMath(BoxLayout):
         for inst in self.equations.values():
             inst.update_text(target=None)
             self.bind_equation_to_draw_connections(inst)
+        self.blackboard.update_connections()
 
 class MySettingsWithTabbedPanel(SettingsWithTabbedPanel):
     pass
@@ -559,8 +666,11 @@ class SketchyMathsApp(App):
 
     def build(self):
         self.settings_cls = MySettingsWithTabbedPanel
-        global APP
-        APP = self
+        self.root = SketchyScreens()
+        self.root.app = self
+        self.root.auto_save_clock = \
+            Clock.schedule_interval(self.root.main.maths.auto_save_callback,
+                                    int(self.root.app.config.get('Settings', 'auto_save_interval')) * 60)
         return self.root
 
     #  Settings data is imported as settings_json and settings_default from sketchysettings.py
@@ -572,12 +682,13 @@ class SketchyMathsApp(App):
 
     def on_config_change(self, config, section, key, value):
         if section == 'Settings':
-            if key == 'text_color_main':
-                pass
+            if key == 'auto_save_interval':
+                self.root.auto_save_clock = Clock.schedule_interval(self.root.main.maths.auto_save_callback,
+                                                                    int(value)*60)
 
     def close_settings(self, settings=None, *largs):
         super(SketchyMathsApp, self).close_settings(settings)
-        for equation in self.root.get_screen('main').sketchy_maths.equations.values():
+        for equation in self.root.main.maths.equations.values():
             equation.update_text()
-        self.root.get_screen('main').sketchy_maths.blackboard.update_connections()
+        self.root.main.maths.blackboard.update_connections()
 
