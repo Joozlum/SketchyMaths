@@ -2,8 +2,7 @@
 Custom code for debugging and logging information about how the program runs
 """
 import time
-import shelve
-import pickle
+
 
 # Code to clone SketchyBook into SketchyExamples
 #   Decided to separated the books so that updating or pulling a branch down doesn't clear the user's book

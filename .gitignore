@@ -9,6 +9,9 @@ sketchymaths/sketchymaths.ini
 # Scratch Files
 sketchymaths/streamofnotes.txt
 
+# PyCharm .idea folder
+.idea
+
 # Vim
 *.swp
 *.swo

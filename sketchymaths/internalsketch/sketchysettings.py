@@ -43,6 +43,20 @@ settings_json = '''
     "key": "comment_color"
   },
   {
+    "type": "numeric",
+    "title": "Time Between Auto-Saves",
+    "desc": "Time, in minutes, between each auto-save.",
+    "section": "Settings",
+    "key": "auto_save_interval"
+  },
+  {
+    "type": "numeric",
+    "title": "Auto-Saves to keep",
+    "desc": "Number of auto-saves to keep before throwing out the oldest.",
+    "section": "Settings",
+    "key": "auto_save_number"
+  },
+  {
     "type": "string",
     "title": "Depth Limit Error Color",
     "desc": "RGB values in x, x, x, format.  If you see this color, you've either created an infinite loop, or have a massively complicated equation.",
@@ -66,5 +80,7 @@ settings_defaults = {'text_color_main': '1, 1, 1',
                      'arrow_color': '0, 1, 0',
                      'arrow_transparency': 0.25,
                      'comment_color': '0, .8, 1',
+                     'auto_save_interval': 10,
+                     'auto_save_number': 25,
                      'depth_limit_color': '1, 0, 0',
                      'depth_limit': 30}
