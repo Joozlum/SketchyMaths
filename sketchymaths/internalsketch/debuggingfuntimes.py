@@ -1,13 +1,14 @@
 """
 Custom code for debugging and logging information about how the program runs
 """
+import shelve
 import time
 
 
 # Code to clone SketchyBook into SketchyExamples
 #   Decided to separated the books so that updating or pulling a branch down doesn't clear the user's book
-# book = shelve.open('../data/SketchyBook')
-# book_copy = shelve.open('../data/SketchyExamples')
+# book = shelve.open('C:\\Users\\Jonathan\\Documents\\Programming\\SketchyMaths\\data\\SketchyBook')
+# book_copy = shelve.open('C:\\Users\\Jonathan\\Documents\\Programming\\SketchyMaths\\data\\SketchyExamples')
 # for key in book.keys():
 #     book_copy[key] = book[key]
 #
@@ -48,7 +49,7 @@ class SketchCollection(object):
                 call_type = f(*args, **kwargs)
                 elapsed_time = time.perf_counter() - start_time
                 self.total_time += elapsed_time
-                print('{}\n{}, {}, {}'.format(self.func, self.calls, self.total_time, self.average_time))
+                print('{}\ncalls:{}, time(total:{}, aver:{})'.format(self.func, self.calls, self.total_time, self.average_time))
                 return call_type
             return inner_wrap
         return outer_wrap

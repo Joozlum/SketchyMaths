@@ -1,4 +1,6 @@
 [size=30][b][u]Controls:[/b][/u][/size]
+(Small introduction found under 'Load'.  Goto Load screen, click 'Load Examples', and click Introduction)
+
 -Double-Click or Double-Tap:
 Creates new Equation
 
@@ -8,14 +10,11 @@ Then when you click on a different equation, or create a new one, the 'empty' on
 -Left Click on a different Equation:
 Switch focus of text inputs to different Equation
 
--Left Click on Equation already in focus:
-Focuses keyboard to Equation Text Editor and selects all text
-
 -Left Click and drag outside of an Equation:
 Allows you to drag the entire screen, moving all Equations at once relative to the point grabbed.
 
 -Middle Mouse Button:
-Replaces selected text or inserts if no text is selected :name: of Equation clicked on (unless clicking on self) into text input.
+Replaces selected text (or inserts if none is selected) with :name: of Equation clicked on (unless clicking on self) into text input.
 
 -Pressing 'enter' while the Equation Text Editor is in focus will cycle through selecting references, if any are present.
 
@@ -44,7 +43,7 @@ These references will also be displayed by a line showing the path of the refere
 If you try they will be replaced with semi-colons.
 
 -If you decide to manually enter in a self reference to an equation it will display (Self) to remind you that you tried to start an infinite loop.
-(There is also a DEPTH_LIMIT of 50, so if you make strange references that end up in a loop it should be okay, though you won't get a solution)
+(There is also a depth_limit, so if you make strange references that end up in a loop it should be okay, though you won't get a solution)
 
 The two text inputs at the top of the screen edit the equation and its name.
     -Whatever equation you last clicked appears in the TextInput where you can edit it.
