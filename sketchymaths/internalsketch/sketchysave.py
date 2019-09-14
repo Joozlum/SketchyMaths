@@ -131,7 +131,7 @@ class SketchySave(Screen):
         self.previous_auto_save = data
         sketchybook = shelve.open('data/AutoSaves')
         save_list = [x for x in sketchybook.keys()]
-        remaining_saves = len(save_list) - int(self.main.app.config.get('Settings', 'auto_save_number'))
+        remaining_saves = len(save_list) - int(self.main.app.config.get('Behavior', 'auto_save_number'))
         if remaining_saves > 0:
             save_list.sort()
             for x in range(remaining_saves):
