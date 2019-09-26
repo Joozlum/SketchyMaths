@@ -30,6 +30,17 @@ Bitwise Operators for integers
 '>>': shift right by n bits
 '~': invert bits
 
+Python Functions
+'range': creates a list.  range(5) would create a list [0, 1, 2, 3, 4].  Can take up to 3 inputs.
+range(starting number, ending number, number to count by)
+range(2, 10, 2) would create the list [2, 4, 6, 8]
+To actually create the list, enter in [x for x in range(2, 10, 2)].
+Range only creates the iterable function, x for x in range() call the function and creates the list.
+
+'zip':  zip(list1, list2)  creates an iterable that combines the two lists.
+Useful when you need to have lists of the same length interact.
+e.g. [x+y for x, y in zip(list1, list2)] would create a new list with each entry of list1 added with the corresponding index of list2.
+
 Math Functions
 'acos': acos
 'asin': asin
