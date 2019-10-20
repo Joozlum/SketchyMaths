@@ -28,6 +28,9 @@ import sketchymaths.internalsketch.sketchystatic as ss
 #  For debugging
 # from sketchymaths.internalsketch.debuggingfuntimes import SketchCollection
 
+#  todo
+#   clear should also clear text input
+
 class MenuButton(Button):
     def __init__(self, **kwargs):
         super(MenuButton, self).__init__(**kwargs)
@@ -634,6 +637,8 @@ class SketchyMath(BoxLayout):
 
         #  Bind new equation to EquationEditor
         eq.equation_bind()
+
+        #  Bind to update_connections for drawing arrows
         eq.bind(x=self.blackboard.update_connections)
 
     def on_touch_down(self, touch):
