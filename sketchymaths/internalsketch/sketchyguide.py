@@ -3,7 +3,7 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.uix.scrollview import ScrollView
-from sketchymaths.internalsketch.text_loader import guide_text, methods_text
+from sketchymaths.internalsketch.text_loader import load_text
 
 class SketchyGuide(Screen):
     def __init__(self, **kwargs):
@@ -22,7 +22,7 @@ class SketchyGuide(Screen):
         self.scroll_view_label.padding = (10, 10)
         self.scroll_view_label.markup = True
         self.scroll_view_label.font_size = 20
-        self.scroll_view_label.text = guide_text
+        self.scroll_view_label.text = load_text('guide')
 
         self.box2 = BoxLayout()
         self.box2.orientation = 'horizontal'
@@ -57,9 +57,9 @@ class SketchyGuide(Screen):
 
     def button_callback(self, value):
         if value.text == 'Guide':
-            self.scroll_view_label.text = guide_text
+            self.scroll_view_label.text = load_text('guide')
         elif value.text == 'Shortcuts':
-            self.scroll_view_label.text = methods_text
+            self.scroll_view_label.text = load_text('methods')
         elif value.text == 'Return':
             self.screenmanager.current = 'main'
 

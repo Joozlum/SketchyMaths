@@ -28,6 +28,9 @@ import sketchymaths.internalsketch.sketchystatic as ss
 #  For debugging
 # from sketchymaths.internalsketch.debuggingfuntimes import SketchCollection
 
+#  todo
+#   clear should also clear text input
+
 class MenuButton(Button):
     def __init__(self, **kwargs):
         super(MenuButton, self).__init__(**kwargs)
@@ -422,6 +425,13 @@ class EquationScatter(Scatter):
         self.equation_id = new_id
 
     def update_equation_id_dependencies(self, old_id, new_id):
+        """
+        If an equation id is change, go through other equations and update the name.
+        This allows for changing the name of an equation that is already referenced without breaking the links.
+        :param old_id:
+        :param new_id:
+        :return:
+        """
         old_id = ':{old_id}:'.format(old_id=old_id)
         new_id = ':{new_id}:'.format(new_id=new_id)
         for inst in self.root.equations.values():
@@ -459,6 +469,11 @@ class BlackBoard(FloatLayout):
         return super(BlackBoard, self).on_touch_down(touch)
 
     def on_touch_move(self, touch):
+        """
+        If self is grabbed (self being blackboard here) then call drag screen
+        :param touch:
+        :return:
+        """
         if touch.grab_current is self:
             self.drag_screen(touch.dpos)
         else:
@@ -481,6 +496,12 @@ class BlackBoard(FloatLayout):
             equation.y += dpos[1]
 
     def on_touch_up(self, touch, after=False):
+        """
+        On release of left mouse button, if a equation is under the mouse, call for focus of the text editor
+        :param touch:
+        :param after:
+        :return:
+        """
 
         if touch.grab_current is self:
             self.bind_all_equations()
@@ -506,10 +527,18 @@ class BlackBoard(FloatLayout):
             self.update_call = True
 
     def unbind_all_equations(self):
+        """
+        Call to unbind all equations from update_connections
+        :return:
+        """
         for inst in self.root.equations.values():
             inst.unbind(x=self.update_connections)
 
     def bind_all_equations(self):
+        """
+        Call to bind all equations to the update_connections method for drawing arrows
+        :return:
+        """
         for inst in self.root.equations.values():
             inst.bind(x=self.update_connections)
 
@@ -577,6 +606,11 @@ class SketchyMath(BoxLayout):
         self.add_widget(self.blackboard, canvas='before')
 
     def auto_save_callback(self, *args):
+        """
+        Callback for auto-save clock.
+        :param args:
+        :return:
+        """
         self.main.screenmanager.save.auto_save()
 
     def new_equation(self, pos, **kwargs):
@@ -603,9 +637,17 @@ class SketchyMath(BoxLayout):
 
         #  Bind new equation to EquationEditor
         eq.equation_bind()
+
+        #  Bind to update_connections for drawing arrows
         eq.bind(x=self.blackboard.update_connections)
 
     def on_touch_down(self, touch):
+        """
+        If a double tap is detected in the blackboard area and it does not collide with another widget
+        create a new equation at the mouse location.
+        :param touch:
+        :return:
+        """
         super(SketchyMath, self).on_touch_down(touch)
         if self.blackboard.collide_point(*touch.pos):
             if touch.is_double_tap\
@@ -636,6 +678,10 @@ class SketchyMath(BoxLayout):
         self.canvas.after.clear()
 
     def delete_equation(self):
+        """
+        Called if an equation loses focus and is empty.
+        :return:
+        """
         key = str(self.previous_equation.equation_id)
         if key in self.equations:
             uid = self.equations[key]
@@ -643,6 +689,11 @@ class SketchyMath(BoxLayout):
             self.blackboard.remove_widget(uid)
 
     def load_function(self, data):
+        """
+        Takes in save data and rebuilds the widgets from that data.
+        :param data: list
+        :return:
+        """
         if self.equations is not None:
             for inst in self.equations.values():
                 self.blackboard.remove_widget(inst)

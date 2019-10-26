@@ -8,7 +8,7 @@ sketchy_dict = {'acos': math.acos, 'asin': math.asin,
                 'ldexp': math.ldexp, 'log': math.log, 'log10': math.log10,
                 'modf': math.modf, 'pi': math.pi, 'pow': math.pow, 'radians': math.radians,
                 'sin': math.sin, 'sinh': math.sinh, 'sqrt': math.sqrt, 'tan': math.tan, 'tanh': math.tanh,
-                'bin': bin, 'sum': sum, 'zip': zip}
+                'bin': bin, 'sum': sum, 'zip': zip, 'range': range}
 
 
 """
