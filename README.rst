@@ -17,12 +17,6 @@ Features
 * The result of one equation can be used in another equation.
 * If one equation is changed any other equations dependant on it are also updated.
 
-
-** TODO
-    * Create settings window
-    * Clean up code
-    * Make arrows fancier and avoid crossing other equations
-
 Usage
 -----
 

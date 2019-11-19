@@ -102,13 +102,8 @@ class SketchySave(Screen):
     def callback_size_x(self, target=None, width=100):
         self.paddingbox.text_size = self.paddingbox.size
 
-
-    def get_equation_dictionary(self):
-        equation_dictionary = self.main.save_data()
-        data = []
-        for inst in equation_dictionary.values():
-            x = (inst.equation_id, inst.pos, inst.equation_text, inst.equationlabel.font_size)
-            data.append(x)
+    def get_save_data(self):
+        data = self.main.save_data()
         return data
 
     def save_to_book(self, data):
@@ -122,7 +117,7 @@ class SketchySave(Screen):
 
     def auto_save(self):
         name = str(datetime.datetime.today())
-        data = self.get_equation_dictionary()
+        data = self.get_save_data()
         if not data:
             return False
         elif data == self.previous_auto_save:
@@ -131,7 +126,7 @@ class SketchySave(Screen):
         self.previous_auto_save = data
         sketchybook = shelve.open('data/AutoSaves')
         save_list = [x for x in sketchybook.keys()]
-        remaining_saves = len(save_list) - int(self.main.app.config.get('Behavior', 'auto_save_number'))
+        remaining_saves = len(save_list) - 10
         if remaining_saves > 0:
             save_list.sort()
             for x in range(remaining_saves):
@@ -141,7 +136,7 @@ class SketchySave(Screen):
         sketchybook.close()
 
     def callback_savebutton(self, target):
-        self.save_to_book(self.get_equation_dictionary())
+        self.save_to_book(self.get_save_data())
 
         self.labelsavestatus.text = self.savenametextinput.text + '\nSaved!'
         self.labelsavestatus.text += '\n' + str(datetime.datetime.now())
