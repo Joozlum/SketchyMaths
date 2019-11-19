@@ -101,7 +101,6 @@ class SketchyBox(BoxLayout):
                 i += 1
             self.isopen = True
 
-
     def examples_load(self, target):
         if self.isopen:
             self.sketchybook.close()

@@ -24,13 +24,6 @@ appearance_settings_json = '''
   },
   {
     "type": "string",
-    "title": "Variable Text Color",
-    "desc": "RGB values, in x, x, x format",
-    "section": "Appearance",
-    "key": "text_color_variable"
-  },
-  {
-    "type": "string",
     "title": "Arrow Color",
     "desc": "RGB values, in x, x, x format",
     "section": "Appearance",
@@ -49,14 +42,6 @@ appearance_settings_json = '''
     "desc": "RGB values in x, x, x format",
     "section": "Appearance",
     "key": "comment_color"
-  },
-  {
-    "type": "string",
-    "title": "Depth Limit Error Color",
-    "desc": "RGB values in x, x, x, format.  If you see this color, you've either created an infinite loop, or have a massively complicated equation.",
-    "section": "Appearance",
-    "key": "depth_limit_color"
-    
   }
 ]
 '''
@@ -71,10 +56,10 @@ behavior_settings_json = '''
   },
   {
     "type": "numeric",
-    "title": "Depth Limit",
-    "desc": "How deep can internal calculations go?  This prevents infinite loops, by limiting how many times an equation can call for the math of references.  It doesn't change any calculates, but rather, serves as crash protection against accidental self references",
+    "title": "Floating-Point Accuracy",
+    "desc": "How many decimal places to display.  Only affects display, does not change values used for calculation.",
     "section": "Behavior",
-    "key": "depth_limit"
+    "key": "decimal_places"
   },
   {
     "type": "numeric",
@@ -97,19 +82,13 @@ appearance_settings_defaults = {
     'color_example': '',
     'text_color_main': '1, 1, 1',
     'text_color_faded': '.5, .5, .5',
-    'text_color_variable': '1, 0, 1',
     'arrow_color': '0, 1, 0',
-    'arrow_transparency': 0.25,
+    'arrow_transparency': 0.5,
     'comment_color': '0, .8, 1',
-    'auto_save_interval': 10,
-    'auto_save_number': 25,
-    'depth_limit_color': '1, 0, 0',
-    'depth_limit': 30,
-    'load_type': False
 }
 behavior_settings_defaults = {
     'load_type': False,
-    'depth_limit': 30,
+    'decimal_places': 2,
     'auto_save_interval': 10,
     'auto_save_number': 25
 }

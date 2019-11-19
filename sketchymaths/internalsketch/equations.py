@@ -1,3 +1,5 @@
+import sketchymathmethods
+
 """
 Equation class holds an equation, evaluates it and holds that evaluation
 in the output.  The class also holds a dictionary containing references
@@ -89,9 +91,10 @@ class Equation:
         self.links = []
         self.status = False
         self._references = set()
+        self.error = None
+        self.type = None
 
     #  Public facing instance methods
-
     def set_text(self, text=None, starting_equation=None):
         if text:
             self.equation_text = text
@@ -151,7 +154,6 @@ class Equation:
             if cls.test_link(old_reference):
                 cls.get_equation(old_reference).remove_reference(equation_id)
 
-
     def remove_reference(self, equation_id):
         self._references.difference_update([equation_id])
 
@@ -171,8 +173,6 @@ class Equation:
         for equation in cls._equations.values():
             print(equation.equation_id, ':', equation.get_references(), 'links:', equation.links)
 
-    #  Class Methods
-
     @classmethod
     def get_linked_equations(cls, equation_id):
         """
@@ -187,8 +187,6 @@ class Equation:
             if equation_id in inst.links:
                 linked_equations.append(inst)
         return linked_equations
-
-
 
     @classmethod
     def _update_all_equation_ids(cls, old_id, new_id):
@@ -229,23 +227,36 @@ class Equation:
                 equation.output_text = equation.evaluate()
 
     def evaluate(self, internal=None):
+        if '#' in self.equation_text:
+            self.type = 'comment'
+            return self.equation_text
 
         text_to_evaluate = self.replace_links_with_output()
         success = False
         try:
-            result = str(eval(text_to_evaluate))
+            result = eval(text_to_evaluate, {'__builtins__': None}, sketchymathmethods.sketchy_dict)
+            self.type = type(result)
             success = True
-        except ZeroDivisionError:
-            result = 'Division by zero'
+            self.error = None
+        except ArithmeticError as e:
+            result = text_to_evaluate
+            self.error = e
+            self.type = None
         except SyntaxError:
             result = text_to_evaluate
-        except EOFError:
+            self.error = None
+            self.type = None
+        except EOFError as e:
             result = text_to_evaluate
+            self.error = e
+            self.type = None
         except Exception as e:
             result = text_to_evaluate
+            self.error = e
+            self.type = None
 
         self.status = success
-        return result
+        return str(result)
 
     def replace_links_with_output(self):
         output = self.equation_text
