@@ -13,25 +13,52 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.settings import SettingsWithTabbedPanel
 from kivy.uix.textinput import TextInput
 from kivy.properties import ObjectProperty
-
-from internalsketch.sketchysettings import behavior_settings_defaults, appearance_settings_defaults, \
+from .internalsketch.sketchysettings import behavior_settings_defaults, appearance_settings_defaults, \
     behavior_settings_json, appearance_settings_json
 from kivy.config import Config
-
-#  Import internal code from internalsketch
-from sketchymaths.internalsketch.sketchyload import SketchyLoad
-from sketchymaths.internalsketch.sketchysave import SketchySave
-from sketchymaths.internalsketch.sketchyguide import SketchyGuide
-from sketchymaths.internalsketch.equations_new import Equation
-import sketchymaths.internalsketch.sketchystatic as ss
+from .internalsketch.sketchyload import SketchyLoad
+from .internalsketch.sketchysave import SketchySave
+from .internalsketch.sketchyguide import SketchyGuide
+from .internalsketch.equations import Equation
+from .internalsketch import sketchystatic as ss
 
 
-#  For debugging
-# from sketchymaths.internalsketch.debuggingfuntimes import SketchCollection
+class SketchyScreens(ScreenManager):
+    def __init__(self, app, **kwargs):
+        super(SketchyScreens, self).__init__(**kwargs)
 
+        # holds link to app so it can call for stop()
+        self.app = app
 
-# todo
-#   create settings screen
+        self.main = SketchyMain(self.app.config.get)
+        self.main.name = 'main'
+        self.guide = SketchyGuide()
+        self.guide.name = 'guide'
+        self.load = SketchyLoad()
+        self.load.name = 'load'
+        self.save = SketchySave(self.app.config.get)
+        self.save.main = self
+        self.save.name = 'save'
+
+        self.main.screenmanager = self
+        self.guide.screenmanager = self
+        self.load.screenmanager = self
+        self.save.screenmanager = self
+
+        self.add_widget(self.main)
+        self.add_widget(self.guide)
+        self.add_widget(self.load)
+        self.add_widget(self.save)
+
+    def load_data(self, data):
+        self.main.maths.blackboard.load_equation_data(data)
+
+    def save_data(self):
+        return self.main.maths.blackboard.build_save_equation_data()
+
+    def auto_save_callback(self, *args):
+        self.save.auto_save()
+
 
 class MenuButton(Button):
     def __init__(self, **kwargs):
@@ -93,44 +120,6 @@ class SketchyMain(Screen):
     def height_callback(self, target, value):
         self.buttons_box.size_hint_y = 25 / value
 
-
-class SketchyScreens(ScreenManager):
-    def __init__(self, app, **kwargs):
-        super(SketchyScreens, self).__init__(**kwargs)
-
-        # holds link to app so it can call for stop()
-        self.app = app
-
-        self.main = SketchyMain(self.app.config.get)
-        self.main.name = 'main'
-        self.guide = SketchyGuide()
-        self.guide.name = 'guide'
-        self.load = SketchyLoad()
-        self.load.name = 'load'
-        self.save = SketchySave(self.app.config.get)
-        self.save.main = self
-        self.save.name = 'save'
-
-        self.main.screenmanager = self
-        self.guide.screenmanager = self
-        self.load.screenmanager = self
-        self.save.screenmanager = self
-
-        self.add_widget(self.main)
-        self.add_widget(self.guide)
-        self.add_widget(self.load)
-        self.add_widget(self.save)
-
-    def load_data(self, data):
-        self.main.maths.blackboard.load_equation_data(data)
-
-    def save_data(self):
-        return self.main.maths.blackboard.build_save_equation_data()
-
-    def auto_save_callback(self, *args):
-        self.save.auto_save()
-
-
 class GenericLabel(Label):
     def __init__(self, **kwargs):
         super(GenericLabel, self).__init__(**kwargs)
@@ -140,7 +129,6 @@ class GenericLabel(Label):
 
     def generic_callback(self, target, value):
         self.text_size = value
-
 
 class EquationTextInput(TextInput):
     root = ObjectProperty(None)
@@ -190,11 +178,9 @@ class EquationTextInput(TextInput):
         if value:
             Clock.schedule_once(lambda x: self.select_all())
 
-
 class EquationLabel(Label):
     def on_parent(self, widget, parent):
         parent.equationlabel = self
-
 
 class EquationEditor:
     """
@@ -274,15 +260,11 @@ class EquationEditor:
             delimiter=equation.delimiter, equation_id=equation.equation_id
         ))
 
-
 class EquationScatter(Scatter, Equation):
 
     def __init__(self, blackboard, **kwargs):
         super(EquationScatter, self).__init__(output_function=self.update_label_text,
                                               **kwargs)
-
-        # pass text update to equation class
-        self.update_call = self.update_label_text
 
         #  Not sure size hint is used in a float layout
         self.size_hint = (None, None)
@@ -346,7 +328,6 @@ class EquationScatter(Scatter, Equation):
             if self.error_message:
                 self.equation_label.text += f'\n[size=10]{self.error_message}[/size]'
 
-
     def label_size_callback(self, target, value):
         self.equation_label.size = value
 
@@ -365,7 +346,8 @@ class BlackBoard(FloatLayout):
         self.bool_draw_arrows = int(get_setting('Behavior', 'bool_draw_arrows'))
 
         #  update interval for drawing arrows
-        self.refresh = Clock.schedule_interval(self.draw_callback, int(get_setting('Behavior', 'arrow_refresh_rate'))/1000)
+        self.refresh = Clock.schedule_interval(self.draw_callback,
+                                               int(get_setting('Behavior', 'arrow_refresh_rate'))/1000)
 
 #  Draw methods
 #  These are the methods used for drawing the arrows or lines to show connections
@@ -521,43 +503,25 @@ class BlackBoard(FloatLayout):
                 new_equation.update_equation_id(entry['equation_id'])
                 new_equation.equation_text = entry['equation_text']
                 new_equation.links = set(entry['links'])
-                # for ref in entry['references']:
-                #     new_equation.add_reference(ref)
                 self.add_widget(new_equation)
                 new_equation.scale = entry['scale']  # scale needs to be loaded before pos
                 new_equation.pos = entry['pos']
-
 
         #  Set equation text, takes place after all loaded equations exist so equation_ids are present
         for child in self.children:
             child.update_text(child.equation_text)
 
-        # todo
-        #   optimize this loading process
-
-        # Cycle through focus twice to ensure all properly update
-        for child in self.children:
-            self.editor.change_focus(child)
-
-        for child in self.children:
-            self.editor.change_focus(child)
-
     def build_save_equation_data(self):
         save_data = []
         for child in self.children:
-            new_entry = {}
-            new_entry['type'] = 'equation'
-            new_entry['equation_id'] = child.equation_id
-            new_entry['pos'] = child.pos
-            new_entry['equation_text'] = child.equation_text
-            new_entry['scale'] = child.scale
-            new_entry['links'] = child.links
-            # new_entry['references'] = child.get_references()
-
+            new_entry = {'type': 'equation',
+                         'equation_id': child.equation_id,
+                         'pos': child.pos,
+                         'equation_text': child.equation_text,
+                         'scale': child.scale,
+                         'links': child.links}
             save_data.append(new_entry)
-
         return save_data
-
 
 class SketchyMath(BoxLayout):
 
@@ -600,7 +564,6 @@ class SketchyMath(BoxLayout):
         self.add_widget(self.text_editor_box)
         #  canvas='before' ensures TextInputs are drawn on top layer
         self.add_widget(self.blackboard, canvas='before')
-
 
 class SketchyMathsApp(App):
 

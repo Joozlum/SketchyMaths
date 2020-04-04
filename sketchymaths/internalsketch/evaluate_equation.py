@@ -1,6 +1,6 @@
-from sketchymaths.sketchymathmethods import sketchy_dict
+from sketchymathmethods import sketchy_dict
 
-def evaluate_equation_text(equation_text, internal=None):
+def evaluate_equation_text(equation_text):
     try:
         result = eval(equation_text, {'__builtins__': None}, sketchy_dict)
         error_message = ''
