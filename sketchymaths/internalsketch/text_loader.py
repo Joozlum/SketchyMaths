@@ -1,7 +1,7 @@
-import os
+from os import getcwd
 
 def load_text(text_to_load):
-    path = os.getcwd().split('\\')
+    path = getcwd().split('\\')
     path_length = len(path)
     root_directory_for_app = None
     for x in range(path_length):
