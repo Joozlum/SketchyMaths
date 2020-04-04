@@ -3,7 +3,9 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.uix.scrollview import ScrollView
+
 from .text_loader import load_text
+
 
 class SketchyGuide(Screen):
     def __init__(self, **kwargs):

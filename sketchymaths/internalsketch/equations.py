@@ -53,6 +53,8 @@ class Equation:
     def update_equation_dict(self):
         equation_dict[self.equation_id] = self
 
+    # todo
+    #   when an equation_id is changed, the old_id needs to be replaced anywhere it is used in equation_texts
     def update_equation_id(self, new_id):
         if not new_id or new_id in equation_dict.keys():
             return
@@ -62,8 +64,16 @@ class Equation:
 
         if self.equation_id in equation_dict.keys():
             del equation_dict[self.equation_id]
+        for equation in self.links:
+            self.get_equation(equation)._replace_updated_equation_ids(self.equation_id, new_id)
         equation_dict[new_id] = self
         self.equation_id = new_id
+
+    def _replace_updated_equation_ids(self, old_id, new_id):
+        self.equation_text = self.equation_text.replace(
+            self.delimiter + old_id + self.delimiter,
+            self.delimiter + new_id + self.delimiter
+        )
 
     def update_text(self, new_text):
         self.equation_text = new_text
@@ -84,12 +94,16 @@ class Equation:
         """
         Re-evaluates equation, used for updating equations when the referenced
         equations change.
-        :return:
+        :return: None
         """
         if self.active:  # prevents from infinite loop
             return
         text_to_evaluate = self._prepare_equation()[0]  # only needs text_to_evaluate
         self.output, self.error_message = evaluate_equation_text(text_to_evaluate)
+        if self.error_message:
+            self.status = False
+        else:
+            self.status = True
         self.output_function()
         self.active = True
         for equation in self.links:
@@ -104,7 +118,7 @@ class Equation:
                 references |= {equation_id}
                 text_to_evaluate = text_to_evaluate.replace(
                     self.delimiter + equation_id + self.delimiter,
-                    equation_dict[equation_id].output
+                    str(equation_dict[equation_id].output)
                 )
         return text_to_evaluate, references
 
@@ -117,6 +131,10 @@ class Equation:
 
     @classmethod
     def get_equation(cls, equation_id):
+        """
+        Takes in equation_id string and returns Equation instance with that id
+        :rtype: Equation
+        """
         if equation_id in equation_dict.keys():
             return equation_dict[equation_id]
 
