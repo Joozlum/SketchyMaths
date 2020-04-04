@@ -12,18 +12,17 @@ from kivy.uix.scatter import Scatter
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.settings import SettingsWithTabbedPanel
 from kivy.uix.textinput import TextInput
-from kivy.properties import ObjectProperty, StringProperty
+from kivy.properties import ObjectProperty
 
 from internalsketch.sketchysettings import behavior_settings_defaults, appearance_settings_defaults, \
     behavior_settings_json, appearance_settings_json
-from sketchymaths import sketchymathmethods
 from kivy.config import Config
 
 #  Import internal code from internalsketch
 from sketchymaths.internalsketch.sketchyload import SketchyLoad
 from sketchymaths.internalsketch.sketchysave import SketchySave
 from sketchymaths.internalsketch.sketchyguide import SketchyGuide
-from sketchymaths.internalsketch.equations import Equation
+from sketchymaths.internalsketch.equations_new import Equation
 import sketchymaths.internalsketch.sketchystatic as ss
 
 
@@ -108,7 +107,7 @@ class SketchyScreens(ScreenManager):
         self.guide.name = 'guide'
         self.load = SketchyLoad()
         self.load.name = 'load'
-        self.save = SketchySave()
+        self.save = SketchySave(self.app.config.get)
         self.save.main = self
         self.save.name = 'save'
 
@@ -263,7 +262,7 @@ class EquationEditor:
 
     def equation_text_callback(self, target, value):
         if self.current_equation:
-            self.current_equation.set_text(value)
+            self.current_equation.update_text(value)
 
     def insert_equation_name(self, equation):
         #  Do not insert a self reference
@@ -277,11 +276,13 @@ class EquationEditor:
 
 
 class EquationScatter(Scatter, Equation):
-    output_text = StringProperty("Enter some maths!")
 
     def __init__(self, blackboard, **kwargs):
-        super(EquationScatter, self).__init__(**kwargs)
-        super(Equation, self).__init__()
+        super(EquationScatter, self).__init__(output_function=self.update_label_text,
+                                              **kwargs)
+
+        # pass text update to equation class
+        self.update_call = self.update_label_text
 
         #  Not sure size hint is used in a float layout
         self.size_hint = (None, None)
@@ -307,15 +308,10 @@ class EquationScatter(Scatter, Equation):
         #  Binding to set scatter size to the size of the label
         self.equation_label.bind(size=self.scatter_size_callback)
 
-        #  Bind output_text to label text
-        self.update_label_text()
-        self.bind(output_text=self.update_label_text)
-
-    def update_label_text(self, target=None, value=None):
+    def update_label_text(self):
 
         #  This allows for calling with no parameters for updating display
-        if value is None:
-            value = self.output_text
+        value = self.output
 
         #  Change display of comments
         if '#' in value:
@@ -330,12 +326,15 @@ class EquationScatter(Scatter, Equation):
             color = self.blackboard.get_setting('Appearance', 'text_color_main')
             self.equation_label.color = ss.translate_color_config(color)
 
+            # todo
+            #   fix this method for rounding floats
+
             #  if float round number to x decimal places from settings
             #  this only affects display, as it does not alter the stored value
-            if self.type == float:
-                decimal_places = self.blackboard.get_setting('Behavior', 'decimal_places')
-                formatting = f'{{:.{int(decimal_places)}f}}'
-                value = formatting.format(float(value))
+            # if self.type == float:
+            #     decimal_places = self.blackboard.get_setting('Behavior', 'decimal_places')
+            #     formatting = f'{{:.{int(decimal_places)}f}}'
+            #     value = formatting.format(float(value))
 
             self.equation_label.text = f'({self.equation_id})={value}'
 
@@ -344,8 +343,9 @@ class EquationScatter(Scatter, Equation):
             color = self.blackboard.get_setting('Appearance', 'text_color_faded')
             self.equation_label.color = ss.translate_color_config(color)
             self.equation_label.text = f'({self.equation_id})={value}'
-            if self.error:
-                self.equation_label.text += f'\n[size=10]{self.error}[/size]'
+            if self.error_message:
+                self.equation_label.text += f'\n[size=10]{self.error_message}[/size]'
+
 
     def label_size_callback(self, target, value):
         self.equation_label.size = value
@@ -362,16 +362,19 @@ class BlackBoard(FloatLayout):
         #  method for calling for a settings value
         self.get_setting = get_setting
 
+        self.bool_draw_arrows = int(get_setting('Behavior', 'bool_draw_arrows'))
+
         #  update interval for drawing arrows
-        Clock.schedule_interval(self.draw_callback, 0.2)
+        self.refresh = Clock.schedule_interval(self.draw_callback, int(get_setting('Behavior', 'arrow_refresh_rate'))/1000)
 
 #  Draw methods
 #  These are the methods used for drawing the arrows or lines to show connections
 #  They also make use of the staticmethod process_connections imported from sketchystatic
     def draw_callback(self, dt):
-        line_feed = self.generate_list_of_points_to_draw_lines(self.generate_list_of_links())
-        self.clear_canvas_for_lines()
-        self.feed_list_of_points_to_draw_connection(line_feed)
+        if self.bool_draw_arrows == 1:
+            line_feed = self.generate_list_of_points_to_draw_lines(self.generate_list_of_links())
+            self.clear_canvas_for_lines()
+            self.feed_list_of_points_to_draw_connection(line_feed)
 
     def clear_canvas_for_lines(self):
         self.canvas.after.clear()
@@ -397,7 +400,8 @@ class BlackBoard(FloatLayout):
 
         return links_list
 
-    def generate_list_of_points_to_draw_lines(self, links_list):
+    @staticmethod
+    def generate_list_of_points_to_draw_lines(links_list):
         line_feed = []
         for inst1, inst2 in links_list:
             line_feed.append(ss.process_connections(inst2, inst1))
@@ -417,6 +421,7 @@ class BlackBoard(FloatLayout):
                         return True
                     elif touch.button == 'scrollup' or touch.button == 'scrolldown':
                         self.scale_single_equation(child, touch.button)
+                        return True
                     else:
                         #  pass equation for text focus and capture to_delete
                         to_delete = self.editor.change_focus(child)
@@ -483,14 +488,17 @@ class BlackBoard(FloatLayout):
 
     def new_equation(self, pos):
         new_equation = EquationScatter(self)
-        new_equation.center = pos
+        new_equation.center = [pos[0], pos[1]+25]
         #  Add to an equation dictionary
         #  Load the Equation TextWidget
 
         #  Add new equation to blackboard
         self.add_widget(new_equation)
 
-        self.editor.change_focus(new_equation)
+        #  capture return for deletion call
+        to_delete = self.editor.change_focus(new_equation)
+        if to_delete:
+            self.delete_equation(to_delete)
 
     def delete_equation(self, equation=None):
         if equation:
@@ -512,14 +520,27 @@ class BlackBoard(FloatLayout):
                 new_equation = EquationScatter(self)
                 new_equation.update_equation_id(entry['equation_id'])
                 new_equation.equation_text = entry['equation_text']
-                new_equation.links = entry['links']
-                for ref in entry['references']:
-                    new_equation.add_reference(ref)
+                new_equation.links = set(entry['links'])
+                # for ref in entry['references']:
+                #     new_equation.add_reference(ref)
                 self.add_widget(new_equation)
                 new_equation.scale = entry['scale']  # scale needs to be loaded before pos
                 new_equation.pos = entry['pos']
+
+
+        #  Set equation text, takes place after all loaded equations exist so equation_ids are present
         for child in self.children:
-            child.set_text()
+            child.update_text(child.equation_text)
+
+        # todo
+        #   optimize this loading process
+
+        # Cycle through focus twice to ensure all properly update
+        for child in self.children:
+            self.editor.change_focus(child)
+
+        for child in self.children:
+            self.editor.change_focus(child)
 
     def build_save_equation_data(self):
         save_data = []
@@ -531,7 +552,7 @@ class BlackBoard(FloatLayout):
             new_entry['equation_text'] = child.equation_text
             new_entry['scale'] = child.scale
             new_entry['links'] = child.links
-            new_entry['references'] = child.get_references()
+            # new_entry['references'] = child.get_references()
 
             save_data.append(new_entry)
 
@@ -610,10 +631,20 @@ class SketchyMathsApp(App):
     def on_config_change(self, config, section, key, value):
         if section == 'Behavior':
             if key == 'auto_save_interval':
+                self.root.auto_save_clock.cancel()
                 self.root.auto_save_clock = Clock.schedule_interval(
                     self.root.auto_save_callback,
                     int(value)*60
                 )
+            elif key == 'arrow_refresh_rate':
+                self.root.main.maths.blackboard.refresh.cancel()
+                self.root.main.maths.blackboard.refresh = Clock.schedule_interval(
+                    self.root.main.maths.blackboard.draw_callback,
+                    int(value)/1000
+                )
+            elif key == 'bool_draw_arrows':
+                self.root.main.maths.blackboard.bool_draw_arrows = int(value)
+                self.root.main.maths.blackboard.clear_canvas_for_lines()
 
 #  Class for settings panel
 class MySettingsWithTabbedPanel(SettingsWithTabbedPanel):
