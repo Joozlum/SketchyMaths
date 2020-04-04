@@ -1,3 +1,0 @@
-title=SketchyMaths
-author=Jonathan Mitchell
-orientation=all

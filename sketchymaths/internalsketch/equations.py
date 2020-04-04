@@ -79,7 +79,7 @@ class Equation:
     #  list of equations that reference it so they update
     _references = set()
 
-    def __init__(self, name=None, **kwargs):
+    def __init__(self, name=None, update_call=None, **kwargs):
         if not name:
             new_equation_id = self.uid_generator()
         else:
@@ -94,9 +94,11 @@ class Equation:
         self.error = None
         self.type = None
 
+        self.update_call = update_call
+
     #  Public facing instance methods
     def set_text(self, text=None, starting_equation=None):
-        if text:
+        if text is not None:
             self.equation_text = text
             self._update_links()
         self.output_text = self.evaluate()
@@ -225,6 +227,7 @@ class Equation:
             if update_eid in equation.links:
                 cls.update_linked_outputs(equation, internal=True, updated=updated)
                 equation.output_text = equation.evaluate()
+                equation.update_call()
 
     def evaluate(self, internal=None):
         if '#' in self.equation_text:
@@ -256,6 +259,8 @@ class Equation:
             self.type = None
 
         self.status = success
+        if self.update_call:
+            self.update_call()
         return str(result)
 
     def replace_links_with_output(self):

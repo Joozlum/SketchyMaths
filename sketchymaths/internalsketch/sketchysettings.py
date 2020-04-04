@@ -55,6 +55,20 @@ behavior_settings_json = '''
     "key": "load_type" 
   },
   {
+    "type": "bool",
+    "title": "Draw Arrows",
+    "desc": "Draw arrows to connect equations.",
+    "section": "Behavior",
+    "key": "bool_draw_arrows"
+  },
+  {
+    "type": "numeric",
+    "title": "Arrow Refresh Rate",
+    "desc": "Time, in ms, to refresh arrows.",
+    "section": "Behavior",
+    "key": "arrow_refresh_rate"
+  },
+  {
     "type": "numeric",
     "title": "Floating-Point Accuracy",
     "desc": "How many decimal places to display.  Only affects display, does not change values used for calculation.",
@@ -89,6 +103,8 @@ appearance_settings_defaults = {
 behavior_settings_defaults = {
     'load_type': False,
     'decimal_places': 2,
+    'bool_draw_arrows': 1,
+    'arrow_refresh_rate': 200,
     'auto_save_interval': 10,
     'auto_save_number': 25
 }

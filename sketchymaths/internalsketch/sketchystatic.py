@@ -40,7 +40,7 @@ def get_angles(x, y):
     angle4 = sin(angle - .3)
     return angle1, angle2, angle3, angle4
 
-def process_connections(inst1, inst2):
+def process_connections(inst2, inst1):
     """
     Takes in two instances and using their position properties determines what
     points to use to draw a line between them along with an arrow

@@ -40,9 +40,11 @@ class SketchySave(Screen):
             self.paddingbox.text += "{save}".format(save=save)
         sketchybook.close()
 
-    def __init__(self, **kwargs):
+    def __init__(self, get_setting, **kwargs):
         super(SketchySave, self).__init__(**kwargs)
         self.previous_auto_save = None
+
+        self.get_setting = get_setting
 
         self.saveboxlayout = BoxLayout()
         self.saveboxlayout.orientation = 'vertical'
@@ -126,7 +128,7 @@ class SketchySave(Screen):
         self.previous_auto_save = data
         sketchybook = shelve.open('data/AutoSaves')
         save_list = [x for x in sketchybook.keys()]
-        remaining_saves = len(save_list) - 10
+        remaining_saves = len(save_list) - int(self.get_setting('Behavior', 'auto_save_number'))
         if remaining_saves > 0:
             save_list.sort()
             for x in range(remaining_saves):
