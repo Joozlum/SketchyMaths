@@ -1,7 +1,9 @@
 from kivy.app import App
 from kivy.clock import Clock
+from kivy.config import Config
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.vertex_instructions import Line
+from kivy.properties import ObjectProperty
 from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -12,15 +14,14 @@ from kivy.uix.scatter import Scatter
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.settings import SettingsWithTabbedPanel
 from kivy.uix.textinput import TextInput
-from kivy.properties import ObjectProperty
-from .internalsketch.sketchysettings import behavior_settings_defaults, appearance_settings_defaults, \
-    behavior_settings_json, appearance_settings_json
-from kivy.config import Config
+
+from .internalsketch import sketchystatic as ss
+from .internalsketch.equations import Equation
+from .internalsketch.sketchyguide import SketchyGuide
 from .internalsketch.sketchyload import SketchyLoad
 from .internalsketch.sketchysave import SketchySave
-from .internalsketch.sketchyguide import SketchyGuide
-from .internalsketch.equations import Equation
-from .internalsketch import sketchystatic as ss
+from .internalsketch.sketchysettings import behavior_settings_defaults, appearance_settings_defaults, \
+    behavior_settings_json, appearance_settings_json
 
 
 class SketchyScreens(ScreenManager):
@@ -296,7 +297,7 @@ class EquationScatter(Scatter, Equation):
         value = self.output
 
         #  Change display of comments
-        if '#' in value:
+        if type(value) == str and '#' in value:
             #  call settings to get color value, then translate it
             comment_color = self.blackboard.get_setting('Appearance', 'comment_color')
             self.equation_label.color = ss.translate_color_config(comment_color)
@@ -313,12 +314,12 @@ class EquationScatter(Scatter, Equation):
 
             #  if float round number to x decimal places from settings
             #  this only affects display, as it does not alter the stored value
-            # if self.type == float:
+            # if type(value) == float:
             #     decimal_places = self.blackboard.get_setting('Behavior', 'decimal_places')
             #     formatting = f'{{:.{int(decimal_places)}f}}'
             #     value = formatting.format(float(value))
 
-            self.equation_label.text = f'({self.equation_id})={value}'
+            self.equation_label.text = f'({self.equation_id})={value:}'
 
         #  Run for when evaluation was unsuccessful, and display error message
         else:
