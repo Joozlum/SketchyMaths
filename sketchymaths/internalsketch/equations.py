@@ -15,6 +15,7 @@ class EquationDict(dict):
 
 equation_dict = EquationDict()
 
+
 class Equation:
     def __init__(self,
                  output_function=print,
@@ -53,8 +54,7 @@ class Equation:
     def update_equation_dict(self):
         equation_dict[self.equation_id] = self
 
-    # todo
-    #   when an equation_id is changed, the old_id needs to be replaced anywhere it is used in equation_texts
+
     def update_equation_id(self, new_id):
         if not new_id or new_id in equation_dict.keys():
             return
@@ -62,12 +62,24 @@ class Equation:
         #  can't have delimiter in equation_id in equation_id
         new_id = new_id.replace(self.delimiter, ';')
 
-        if self.equation_id in equation_dict.keys():
-            del equation_dict[self.equation_id]
-        for equation in self.links:
-            self.get_equation(equation)._replace_updated_equation_ids(self.equation_id, new_id)
-        equation_dict[new_id] = self
+        #  save old_id
+        old_id = self.equation_id
+
+        #  delete old reference
+        if old_id in equation_dict.keys():
+            del equation_dict[old_id]
+
+        #  save new name
         self.equation_id = new_id
+        self.update_equation_dict()
+
+        #  replace old_id with new_id in any equations that link to this one
+        for equation in self.links:
+            self.get_equation(equation)._replace_updated_equation_ids(old_id, new_id)
+        for equation in equation_dict.values():
+            if old_id in equation.links:
+                equation.links -= {old_id}
+                equation.links |= {new_id}
 
     def _replace_updated_equation_ids(self, old_id, new_id):
         self.equation_text = self.equation_text.replace(
@@ -98,8 +110,9 @@ class Equation:
         """
         if self.active:  # prevents from infinite loop
             return
-        text_to_evaluate = self._prepare_equation()[0]  # only needs text_to_evaluate
+        text_to_evaluate, references_to_update = self._prepare_equation()
         self.output, self.error_message = evaluate_equation_text(text_to_evaluate)
+        self._update_links(references_to_update)
         if self.error_message:
             self.status = False
         else:
@@ -135,8 +148,7 @@ class Equation:
         Takes in equation_id string and returns Equation instance with that id
         :rtype: Equation
         """
-        if equation_id in equation_dict.keys():
-            return equation_dict[equation_id]
+        return equation_dict[equation_id]
 
     @classmethod
     def delete_equation(cls, equation_id):
