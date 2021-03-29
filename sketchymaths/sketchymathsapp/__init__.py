@@ -15,13 +15,13 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.settings import SettingsWithTabbedPanel
 from kivy.uix.textinput import TextInput
 
-from .internalsketch import sketchystatic as ss
-from .internalsketch.equations import Equation
-from .internalsketch.sketchyguide import SketchyGuide
-from .internalsketch.sketchyload import SketchyLoad
-from .internalsketch.sketchysave import SketchySave
-from .internalsketch.sketchysettings import behavior_settings_defaults, appearance_settings_defaults, \
-    behavior_settings_json, appearance_settings_json
+from sketchymaths.sketchymathsapp import sketchystatic as ss
+from sketchymaths.sketchymathsapp.equations import Equation
+from sketchymaths.sketchymathsapp.sketchyguide import SketchyGuide
+from sketchymaths.sketchymathsapp.sketchyload import SketchyLoad
+from sketchymaths.sketchymathsapp.sketchysave import SketchySave
+from sketchymaths.sketchymathsapp.sketchysettings import (behavior_settings_defaults, appearance_settings_defaults,
+                                                          behavior_settings_json, appearance_settings_json)
 
 
 class SketchyScreens(ScreenManager):
@@ -158,9 +158,9 @@ class EquationTextInput(TextInput):
                 i = [self.text.find(':')]
                 while i[-1] != -1:
                     i.append(self.text.find(':', i[-1]+1))
-                i_zip = [[x, y] for x,y in zip([i[0::2]], [i[1::2]])]
-                for x,y in i_zip:
-                    for xx,yy in zip(x,y):
+                i_zip = [[x, y] for x, y in zip([i[0::2]], [i[1::2]])]
+                for x, y in i_zip:
+                    for xx, yy in zip(x, y):
                         if cursor_start <= xx and yy != -1:
                             while self.cursor_index() < yy:
                                 self.do_cursor_movement('cursor_right')
@@ -571,6 +571,8 @@ class SketchyMathsApp(App):
     def build(self):
         #  Disables multi-touch
         Config.set('input', 'mouse', 'mouse,disable_multitouch')
+        Config.set('graphics', 'window_state', 'maximized')
+        Config.write()
 
         #  Initialize settings panel
         self.settings_cls = MySettingsWithTabbedPanel

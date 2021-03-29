@@ -1,4 +1,4 @@
-from .evaluate_equation import evaluate_equation_text
+from .evaluateequation import evaluate_equation_text
 
 class EquationDict(dict):
     def uid_generator(self):
@@ -40,6 +40,7 @@ class Equation:
         # holds whatever error messages evaluate_equation_text might return
         self.error_message = ''
 
+        # used to prevent infinite looping during updates
         self.status = False
 
         # set name, if None generate new name
@@ -52,28 +53,37 @@ class Equation:
         self.active = False
 
     def update_equation_dict(self):
+        """
+        Adds self to equation_dict using equation_id
+        """
         equation_dict[self.equation_id] = self
 
-
     def update_equation_id(self, new_id):
+        """
+        Used for when equation_id changes
+        """
+
+        # Makes sure new_id is not blank and new_id is not already in equation_dict
         if not new_id or new_id in equation_dict.keys():
             return
 
-        #  can't have delimiter in equation_id in equation_id
+        # can't have delimiter in equation_id in equation_id
         new_id = new_id.replace(self.delimiter, ';')
 
-        #  save old_id
+        # save old_id
         old_id = self.equation_id
 
-        #  delete old reference
+        # delete old reference
         if old_id in equation_dict.keys():
             del equation_dict[old_id]
 
-        #  save new name
+        # update instance equation_id property
         self.equation_id = new_id
+
+        # add instance reference to equation_dict with new_id
         self.update_equation_dict()
 
-        #  replace old_id with new_id in any equations that link to this one
+        # replace old_id with new_id in any equations that link to this one
         for equation in self.links:
             self.get_equation(equation)._replace_updated_equation_ids(old_id, new_id)
         for equation in equation_dict.values():
@@ -82,12 +92,19 @@ class Equation:
                 equation.links |= {new_id}
 
     def _replace_updated_equation_ids(self, old_id, new_id):
+        """"
+        Replaces any old_id references with new_id references
+        """
         self.equation_text = self.equation_text.replace(
             self.delimiter + old_id + self.delimiter,
             self.delimiter + new_id + self.delimiter
         )
 
     def update_text(self, new_text):
+        """
+        Called when changing equation_text
+        """
+
         self.equation_text = new_text
         text_to_evaluate, references_to_update = self._prepare_equation()
         self._update_links(references_to_update)
@@ -124,6 +141,9 @@ class Equation:
         self.active = False
 
     def _prepare_equation(self):
+        """
+        Prepares equation_text for running through evaluate_equation
+        """
         text_to_evaluate = self.equation_text
         references = set()
         for equation_id in equation_dict.keys():

@@ -1,6 +1,6 @@
 import unittest
 import os
-from sketchymaths.internalsketch.text_loader import load_text
+from sketchymaths.sketchymathsapp.textloader import load_text
 
 class LoadTextTestCase(unittest.TestCase):
     def setUp(self):

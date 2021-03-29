@@ -68,7 +68,7 @@ class SketchyBox(BoxLayout):
         self.bottombox.size_hint_y = 60 / value
 
     def close_load(self, target):
-        if target.text is not 'Close':
+        if target.text != 'Close':
             data = pickle.loads(self.sketchybook[target.text])
             self.parent.parent.load_data(data)
         if self.isopen:

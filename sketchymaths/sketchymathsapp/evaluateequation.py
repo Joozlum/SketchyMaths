@@ -1,4 +1,4 @@
-from sketchymathmethods import sketchy_dict
+from sketchymaths.sketchymathmethods import sketchy_dict
 
 def evaluate_equation_text(equation_text: str):
     if '#' in equation_text:
