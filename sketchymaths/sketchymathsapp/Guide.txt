@@ -4,7 +4,7 @@
 -Double-Click or Double-Tap:
 Creates new Equation
 
-To deleted an equation, click on it and clear its equation text ('empty' will be displayed).
+To deleted an equation, click on it and clear its equation text.
 Then when you click on a different equation, or create a new one, the 'empty' one will be deleted.
 
 -Left Click on a different Equation:
@@ -37,7 +37,6 @@ These references will also be displayed by a line showing the path of the refere
 -Equations that are successfully evaluated will be white, while equations that could not be evaluated will appear grey.
 
 -If you type '#' anywhere in the equation text it will skip evaluation and become a comment, and the text will appear light blue.
--comments will also be skipped over for creating arrows, so equation names can be used in them without creating clutter.
 
 -Since colons ':' are used to find references, you cannot have them in your equation names.
 If you try they will be replaced with semi-colons.
