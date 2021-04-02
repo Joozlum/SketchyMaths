@@ -3,6 +3,8 @@ from sketchymaths.sketchymathmethods import sketchy_dict
 def evaluate_equation_text(equation_text: str):
     if '#' in equation_text:
         return equation_text, ''
+    if 'Self Reference' in equation_text:
+        return equation_text, 'Infinite Loop happening here!'
 
     try:
         result = eval(equation_text, {'__builtins__': None}, sketchy_dict)

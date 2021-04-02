@@ -126,6 +126,15 @@ class Equation:
         :return: None
         """
         if self.active:  # prevents from infinite loop
+            self.active = False
+            self.output, self.error_message = evaluate_equation_text('Self Reference')
+            self.status = False
+            self.output_function()
+            for equation in self.links:
+                _equation = self.get_equation(equation)
+                _equation.output, _equation.error_message = evaluate_equation_text('Self Reference')
+                _equation.status = False
+                _equation.output_function()
             return
         text_to_evaluate, references_to_update = self._prepare_equation()
         self.output, self.error_message = evaluate_equation_text(text_to_evaluate)
