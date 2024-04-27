@@ -30,6 +30,13 @@ Check requirements.txt to see if dependencies are installed.
     cd sketchymaths
     python main.py
 
+**If you haven't used this before:**
+
+* Left Click "Load" at the bottom of the screen
+* Left Click "Load Examples"
+* Select "Tutorial" by left clicking on the name or anywhere in the box with that name
+* Follow instructions in tutorial.  *The tutorial works best if window is maximized*
+
 Adding Custom Functions
 ~~~~~~~~~~~~~~~~~~~~~~~
 You can add any sort of custom function to SketchyMaths.  The examples are a simple percent conversion
