@@ -16,6 +16,8 @@ Features
 * Allows for multiple equations to be evaluated separately
 * The result of one equation can be used in another equation.
 * If one equation is changed any other equations dependant on it are also updated.
+* Works similar to an excel sheet, but where you can move and change the size of 
+    the cells, and arrows show where values are going.
 
 Usage
 -----
